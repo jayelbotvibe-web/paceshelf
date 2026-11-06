@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=PaceShelf
+Comment=Play courses offline with progress shared on a removable drive
+Exec=bash -c "cd \"\$(dirname \"\$1\")\" && exec bash ./start.sh" _ %k
+Icon=video-player
+Terminal=false
+Categories=AudioVideo;
