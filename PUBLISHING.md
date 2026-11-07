@@ -10,8 +10,12 @@ build directory. Git ignore rules do not remove files from existing commits.
 PUBLIC-SOURCE-MANIFEST.json is an explicit allowlist. New files require review
 before they are added to that list. The checker rejects unexpected files, media,
 runtime records, symlinks, secrets and machine-specific home/media paths. The only
-permitted binaries are the declared Gradle wrapper and font files with verified
-hashes. Synthetic fixtures must be generated locally and stay ignored.
+permitted binaries are the declared Gradle wrapper, font files and separately
+reviewed documentation images with verified hashes. Documentation images must be
+static WebP files directly in `docs/assets`, below 2 MiB, with no EXIF/XMP or other
+metadata chunks. Their exact hashes live in `documentation_sha256`; adding a file
+to the general allowlist alone does not permit an image. Synthetic fixtures and
+raw recordings must be generated locally and stay ignored.
 
 ```sh
 python3 tools/audit-public-source.py
@@ -69,4 +73,5 @@ be inspected in a distributed APK. Keep private personal identity out of it.
 Debug APKs are development previews and do not establish the final publisher key.
 
 The project is licensed under MIT. Keep the bundled Inter OFL notice. Public
-examples and screenshots must use the synthetic fixture generator only.
+examples and screenshots must use a synthetic fixture generator only. The public
+walkthrough uses `tools/create-demo.py`; see [demo production](docs/DEMO.md).

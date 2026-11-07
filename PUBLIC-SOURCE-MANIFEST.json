@@ -3,9 +3,12 @@
   "android_package": "org.paceshelf.player",
   "files": [
     ".githooks/pre-commit",
+    ".github/ISSUE_TEMPLATE/bug_report.yml",
+    ".github/ISSUE_TEMPLATE/feature_request.yml",
     ".github/workflows/source-privacy.yml",
     ".gitignore",
     "CHANGES.md",
+    "CONTRIBUTING.md",
     "LICENSE",
     "PUBLISHING.md",
     "README.md",
@@ -59,10 +62,15 @@
     "desktop/static/library.js",
     "desktop/static/style.css",
     "desktop/unmount.go",
+    "docs/DEMO.md",
     "docs/IMPLEMENTATION.md",
+    "docs/INSTALL.md",
     "docs/PLAN-REVIEW.md",
     "docs/PRODUCT-PLAN.md",
     "docs/STORAGE.md",
+    "docs/assets/library-desktop.webp",
+    "docs/assets/responsive-layouts.webp",
+    "docs/assets/walkthrough-poster.webp",
     "gradle.properties",
     "gradle/wrapper/gradle-wrapper.jar",
     "gradle/wrapper/gradle-wrapper.properties",
@@ -72,19 +80,28 @@
     "licenses/Gradle-Wrapper-Apache-2.0.txt",
     "settings.gradle",
     "tools/audit-public-source.py",
+    "tools/audit-public-source.test.py",
     "tools/browser-cdp.mjs",
     "tools/cdp-eval.mjs",
     "tools/cdp.mjs",
+    "tools/create-demo.py",
     "tools/create-test-fixtures.sh",
     "tools/library-protocol.test.cjs",
     "tools/paceshelf-smoke.mjs",
     "tools/package-desktop.sh",
     "tools/package-public-source.py",
-    "tools/package-release.sh"
+    "tools/package-release.sh",
+    "tools/record-demo.mjs",
+    "tools/render-demo.py"
   ],
   "binary_sha256": {
     "gradle/wrapper/gradle-wrapper.jar": "81a82aaea5abcc8ff68b3dfcb58b3c3c429378efd98e7433460610fecd7ae45f",
     "app/src/main/assets/fonts/InterVariable.woff2": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3",
     "desktop/static/fonts/InterVariable.woff2": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3"
+  },
+  "documentation_sha256": {
+    "docs/assets/library-desktop.webp": "c0f9664dc18af54a0c6be07ab61a0b18fc33c65a2d8dc077a2da7001eb44e91c",
+    "docs/assets/responsive-layouts.webp": "608cc31d4c72eb548010848c6c0f05e92c685ba9628669b1372528aeb22074f0",
+    "docs/assets/walkthrough-poster.webp": "44976a84a1292120969aaefdadd5f44823f1c1affe86cb335c01fb5c305fc076"
   }
 }

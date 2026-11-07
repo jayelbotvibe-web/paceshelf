@@ -1,0 +1,45 @@
+name: Report a bug
+description: Help reproduce a problem with the player, progress or installation.
+title: "Bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use fictional examples. Do not attach personal videos, library backups, private paths or unreviewed logs. Screenshots may expose titles and viewing history.
+  - type: input
+    id: version
+    attributes:
+      label: PaceShelf version
+      placeholder: "For example: 0.1.0 preview"
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system and browser or WebView
+      placeholder: "For example: Ubuntu version and browser version, or Android version"
+    validations:
+      required: true
+  - type: dropdown
+    id: storage
+    attributes:
+      label: Storage mode
+      options:
+        - On this device
+        - Portable library
+        - Not sure or installation issue
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Describe the steps using fictional collection and lesson names.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

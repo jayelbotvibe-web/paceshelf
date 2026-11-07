@@ -29,11 +29,13 @@ interrupted catalog upgrades, unavailable portable storage and verification of t
 local checkpoint before removal assurances. Backup adoption establishes a fresh
 anonymous writer identity and retains the previous library locally.
 
-The source archive contains only reviewed source/documentation, upstream notices,
-the Gradle wrapper and Inter fonts. It excludes generated media, private libraries,
-playback records, screenshots, raw logs, signing material, local configuration,
-Git history and build outputs. Runtime tests and raw diagnostics are not publication
-candidates. GitHub account and commit identity are outside the file audit.
+The original preview source archive contains reviewed source/documentation,
+upstream notices, the Gradle wrapper and Inter fonts. The current repository also
+includes three separately reviewed synthetic documentation images. It excludes
+sample course clips, private libraries, playback records, unreviewed screenshots,
+raw logs, signing material, local configuration, Git history and build outputs.
+Runtime tests and raw diagnostics are not publication candidates. GitHub account
+and commit identity are outside the file audit.
 
 Remaining release gates include physical phone/tablet USB handoff, screen-off
 battery and USB power measurement, filesystem failure/latency checks, wider codec
@@ -41,3 +43,21 @@ and OS coverage, large-library CPU/memory profiling, final signing ownership and
 completion of the local library-manager/relink/recovery experience. ARM64 desktop
 packages are cross-compiled and have not been executed on that hardware. Online
 sources are not implemented. See [implementation status](docs/IMPLEMENTATION.md).
+
+## Public presentation and walkthrough
+
+The updated README separates installation from development, explains storage
+modes and links to a 46.65-second, intentionally silent recording of the actual
+Ubuntu browser interface. Sample lesson media is original, programmatically
+generated material in an isolated library. Phone/tablet stills are responsive
+browser captures, not physical-device validation. See [demo details](docs/DEMO.md).
+
+The H.264 export was fully decoded without errors; dimensions, frame rate, runtime
+and absence of audio were checked. Representative encoded frames and a sequence
+contact sheet were visually reviewed. This is frame/technical review, not a claim
+of a full real-time audiovisual viewing or new Android/hardware testing.
+
+Five publication-boundary tests verify acceptance of a pinned static WebP and
+rejection of changed bytes, a general-allowlist-only image, embedded metadata and
+unlisted media. Documentation links and issue-template YAML were checked. These
+documentation changes do not change the application downloads or preview signer.

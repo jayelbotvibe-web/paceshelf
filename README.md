@@ -2,110 +2,140 @@
 
 **Your learning library. Your pace.**
 
-PaceShelf is a free personal video learning library for Android and Ubuntu. It runs
-on your devices, with no account, hosted video service or synchronization backend.
-Supply your own videos in any folder or on a removable drive.
+Turn a folder of your own videos into an organized learning library. Resume lessons,
+adjust playback speed, save bookmarks and track what you have finished — on Android
+or Ubuntu, with no account or hosted service required.
 
-## Development preview — 0.1.0
+**[Download for Android](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.1.0-preview/PaceShelf-0.1.0-preview-debug.apk)**
+&nbsp; · &nbsp;
+**[Download for Ubuntu](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.1.0-preview/paceshelf_0.1.0-preview1_amd64.deb)**
+&nbsp; · &nbsp;
+[Installation guide](docs/INSTALL.md)
+&nbsp; · &nbsp;
+[All downloads](https://github.com/jayelbotvibe-web/paceshelf/releases/tag/v0.1.0-preview)
 
-Get the Android APK and Ubuntu packages from this repository’s
-[preview download page](../../releases/tag/v0.1.0-preview). Android previews are
-debug-signed; keep a metadata backup before switching to a future release signer.
+> **Development preview · 0.1.0.** Suitable for trying the project with backed-up
+> videos and metadata. Physical USB handoff, battery use and broader codec support
+> still need validation. The Android APK is debug-signed; export a metadata backup
+> before a future signing change. [Known limitations](#compatibility-and-preview-limits).
 
-This is the first implementation milestone, based on an existing offline player.
-It is not the completed roadmap or a stable public release. Online playback is not
-implemented. Physical Android battery, USB handoff and broad codec validation are
-still required. See [implementation status](docs/IMPLEMENTATION.md).
+## See it in action
 
-- Browse folders as collections; play MP4/WebM and other browser-supported media.
-- Resume playback, change speed, seek, skip and advance to the next lesson.
-- Customize collection titles, lesson titles, sections and ordering; save favorites.
-- Mark lessons complete independently of playback position, with undo.
-- Create timestamp bookmarks, jump back to them and delete them.
-- Choose device-only or portable metadata storage in Library settings.
-- Export all metadata and preview a backup before restoring it; videos are excluded.
-- Review conflicting changes instead of choosing a position by device clock.
-- Use a light gray interface, bundled Inter font and responsive phone/tablet layouts.
+[![PaceShelf walkthrough: a fictional photography course in the light gray player, with playback controls, lesson progress and a play-video link.](docs/assets/walkthrough-poster.webp)](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.1.0-preview/PaceShelf-Walkthrough.mp4)
 
-Metadata uses persistent library/media/entry IDs. Media locators currently match
-relative path and size. Automatic content-based relocation and detection of edits
-that preserve file size are not implemented; do not treat this as content hashing.
+**[Watch or download the short walkthrough (MP4)](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.1.0-preview/PaceShelf-Walkthrough.mp4)**
+— a silent, captioned recording of the working Ubuntu player. It shows resuming a
+lesson, changing speed, bookmarking, completion with undo, and storage settings.
+[Read the walkthrough](docs/DEMO.md) for the same steps without video.
 
-## Android
+All examples are fictional. Application downloads contain no course videos or
+personal viewing history.
 
-The preview uses `org.paceshelf.player`, separate from the earlier application.
-Installing it does not replace an app with a different identifier. Select your
-video folder using Android's folder picker. A folder containing videos directly
-also works; no particular folder name is required.
+## Make steady progress
 
-Build with JDK 17 and Android SDK 35:
+| What you want to do | What PaceShelf offers today |
+| --- | --- |
+| Find your next lesson | Collections, search, favorites and Continue learning |
+| Watch at your own pace | Remembered position and speed, seeking, previous/next and optional auto-next |
+| Know what you have finished | Explicit lesson completion, collection progress and undo |
+| Revisit a useful explanation | Timestamp bookmarks with jump and delete |
+| Organize your material | Custom collection/lesson titles, section labels and ordering without renaming files |
+| Keep control of your history | Device-only or portable storage, metadata backups and conflict review |
 
-```sh
-./gradlew :app:assembleDebug :app:assembleAndroidTest :app:lintDebug
-```
+<details>
+<summary><strong>Your library at a glance</strong></summary>
 
-The development APK is under `app/build/outputs/apk/debug/`. Debug builds are for
-testing. Public release signing requires external key material and a pinned
-certificate; it is never generated silently. See [publishing](PUBLISHING.md).
+![PaceShelf library with three fictional collections, a Continue learning card, favorites, search and completion progress.](docs/assets/library-desktop.webp)
 
-## Ubuntu
+</details>
 
-The Ubuntu `.deb` package installs an applications-menu launcher. The portable
-archive contains a graphical folder picker and an installer for an
-applications-menu launcher. Install `zenity`, `curl`, `python3` and `xdg-utils` if
-needed; `ffmpeg` enables thumbnails. Extract the Ubuntu package and run `install.sh`
-once, then open PaceShelf from your applications menu. Run the player as your normal
-user. There is no need to run `start.sh` with sudo.
+<details>
+<summary><strong>Phone and tablet layouts</strong></summary>
 
-Build the portable Ubuntu package with Go 1.22 or newer:
+![The same fictional lesson in narrow phone and wider tablet layouts, showing the player and lesson list. These are responsive browser captures, not physical-device validation.](docs/assets/responsive-layouts.webp)
 
-```sh
-bash tools/package-desktop.sh
-```
+Responsive browser captures of the shared interface. Android uses a native app
+with the system folder picker; these images do not establish physical-device testing.
 
-For development, run from the `desktop` folder:
+</details>
 
-```sh
-go build -trimpath -o paceshelf .
-./paceshelf -root /path/to/your/video-folder -addr 127.0.0.1:8378
-```
+## Get started
 
-Open the printed loopback URL. `-device-only` avoids writing new metadata beside
-videos. Persistent history lives in the operating system's application-data area;
-cache cleanup must not remove it. See [desktop details](desktop/README.md).
+1. **Install PaceShelf** using the [Android or Ubuntu guide](docs/INSTALL.md).
+2. **Choose your video folder.** Videos can be on the device or an accessible USB
+   drive. Subfolders become collections; videos directly in the chosen folder work too.
+3. **Choose where progress is saved** in **Library settings → Save library metadata**.
+4. **Open a collection and play.** Return to Continue learning when you come back.
 
-## Taking progress to another device
+Ubuntu opens the player in your browser through a local launcher. There is no
+publicly hosted player to upload your library to, and no server account to create.
 
-In **Portable library** mode, use the same video folder and its hidden `.paceshelf`
-metadata folder on the other device. Pause, wait for a verified portable save, and
-finish safe removal through the operating system before unplugging. Android's
-button prepares the app for removal; system unmount remains a separate action.
-Only one device should use a portable drive at a time. Network filesystems and
-simultaneously mounted storage are not supported.
+## Take progress to another device
 
-In **On this device** mode, export a library backup and transfer it yourself. On
-the other device, choose the matching video folder, choose On this device, and
-restore the backup after reviewing the replacement preview. Relative paths and
-sizes must match for videos to be available. Regrant folder access on each device.
-There is no automatic exchange between independent installations.
+| Storage choice | Where progress is saved | How you move it |
+| --- | --- | --- |
+| **On this device** | This installation's app data | Export a library backup, transfer it, then review and restore it on the other device |
+| **Portable library** | A checked copy in the video folder's hidden `.paceshelf` folder, with a local recovery copy | Use PaceShelf on each device and connect the same drive |
 
-Legacy progress snapshots are imported once and kept untouched. Earlier players
-cannot synchronize new PaceShelf completion, bookmarks or collection edits; use
-PaceShelf on each device after migration. Keep an independent metadata backup.
+**There is no automatic cloud synchronization.** Separate video copies do not share
+progress on their own. Metadata backups contain collections, progress and bookmarks;
+they **do not include your videos**.
 
-## Privacy, source and license
+For portable use:
 
-The source contains synthetic examples only. It excludes personal identities,
-private libraries, videos, playback records, credentials, signing keys and recovery
-material. Your own app-generated metadata is plaintext and can contain your video
-titles and history; do not upload it to the source repository.
+1. Choose the **same video-library folder** on each device and select **Portable library**.
+2. Pause playback and confirm that saving to the drive succeeded. **This device only**
+   means the shared drive has not received the latest progress.
+3. Use **Safely remove**, then finish the operating system's unmount/eject step
+   before unplugging. Android's button prepares the app; it does not unmount USB storage.
+4. Connect the drive to the next device, grant folder access and open or refresh the library.
 
-```sh
-node --test tools/library-protocol.test.cjs
-python3 tools/audit-public-source.py
-```
+Keep the entire `.paceshelf` folder if you copy a library. Use one device at a time;
+simultaneous/network-mounted libraries are unsupported. Keep an independent backup.
 
-See [testing](TESTING.md), [verification](VERIFICATION.md), the [product plan](docs/PRODUCT-PLAN.md)
-and [risk review](docs/PLAN-REVIEW.md). Source is available under the [MIT license](LICENSE).
-Inter retains its [SIL Open Font License](app/src/main/assets/fonts/OFL.txt).
-Other bundled/build components retain their [upstream notices](THIRD-PARTY-NOTICES.md).
+## Compatibility and preview limits
+
+| Platform or source | Current status |
+| --- | --- |
+| Android | Android 9 or newer; current Android System WebView; grant access with the folder picker |
+| Ubuntu x86_64 / AMD64 | `.deb` and portable archive; local launcher opens a compatible browser |
+| Ubuntu ARM64 | Binary in the portable archive; cross-compiled, hardware testing outstanding |
+| Personal local videos | MP4 and WebM are good starting points; playback depends on the actual codec and device/browser |
+| External USB storage | The OS must recognize the drive and allow folder access; portable progress also requires write access |
+| YouTube, streaming services, Windows, macOS and iOS | Not supported in this preview |
+
+Renamed/moved videos are not automatically relinked. Multiple-library management,
+import preview for first discovery, richer recovery tools and online sources remain
+planned. Verified metadata saves help detect incomplete writes; they cannot prevent
+drive failure or guarantee against corruption. See [implementation status](docs/IMPLEMENTATION.md)
+and [what was tested](VERIFICATION.md).
+
+## Questions and help
+
+**Why did my progress not appear on another device?** Check the storage mode, choose
+the same library folder, and verify a drive save before unplugging. Device-only
+history needs manual backup transfer. Regrant folder access on the receiving device.
+
+**Does PaceShelf include courses or download videos?** No. Supply videos you are
+entitled to use. YouTube and streaming playback are not implemented.
+
+**Do I need sudo on Ubuntu?** Package installation may require administrator access.
+Run PaceShelf as your normal user; do not run `start.sh` with sudo.
+
+**Is my history private?** There is no hosted sync service or account. Metadata is
+stored as plaintext and may contain your video titles and viewing history. Keep
+backups private and remove identifying information from screenshots and bug reports.
+
+**Found a problem?** [Report a bug](https://github.com/jayelbotvibe-web/paceshelf/issues/new?template=bug_report.yml)
+or [suggest an improvement](https://github.com/jayelbotvibe-web/paceshelf/issues/new?template=feature_request.yml).
+Include the app version, platform and steps to reproduce with fictional examples.
+
+## Contribute and learn more
+
+[Contributing and building](CONTRIBUTING.md) · [Testing](TESTING.md) ·
+[Product roadmap](docs/PRODUCT-PLAN.md) · [Risk review](docs/PLAN-REVIEW.md) ·
+[Storage design](docs/STORAGE.md) · [Publishing safely](PUBLISHING.md)
+
+Free and open source under the [MIT license](LICENSE). Inter uses the
+[SIL Open Font License](app/src/main/assets/fonts/OFL.txt); see
+[third-party notices](THIRD-PARTY-NOTICES.md) for other components.

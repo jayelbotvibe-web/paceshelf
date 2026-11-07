@@ -35,6 +35,25 @@ def git(*args):
     return subprocess.check_output(["git", "-C", str(ROOT), *args], stderr=subprocess.DEVNULL)
 
 
+def documentation_webp(data):
+    """Accept small static WebP images with no EXIF, XMP or other metadata chunks."""
+    if len(data) > 2 * 1024 * 1024 or len(data) < 20 or data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+        return False
+    if int.from_bytes(data[4:8], "little") + 8 != len(data):
+        return False
+    offset, picture = 12, False
+    while offset < len(data):
+        if offset + 8 > len(data):
+            return False
+        kind = data[offset:offset + 4]
+        length = int.from_bytes(data[offset + 4:offset + 8], "little")
+        if kind not in {b"VP8 ", b"VP8L", b"VP8X", b"ALPH"}:
+            return False
+        picture = picture or kind in {b"VP8 ", b"VP8L"}
+        offset += 8 + length + (length % 2)
+    return picture and offset == len(data)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--staged", action="store_true", help="audit the entire Git index using staged bytes")
@@ -79,6 +98,13 @@ def main():
         manifest = json.loads(read(MANIFEST))
         allowed = set(manifest["files"]) | {MANIFEST}
         binary_hashes = manifest["binary_sha256"]
+        documentation_hashes = manifest.get("documentation_sha256", {})
+        if not isinstance(documentation_hashes, dict) or any(
+            Path(rel).parent != Path("docs/assets") or Path(rel).suffix != ".webp"
+            or rel not in allowed or not re.fullmatch(r"[a-f0-9]{64}", digest)
+            for rel, digest in documentation_hashes.items()
+        ):
+            raise ValueError("Invalid documentation image declarations")
         expected_package = manifest["android_package"]
     except (OSError, ValueError, KeyError, subprocess.CalledProcessError):
         print("FAIL: publication allowlist is missing or invalid.")
@@ -87,19 +113,26 @@ def main():
     for number, rel in enumerate(sorted(candidates), 1):
         label = f"candidate #{number}"
         path = Path(rel)
+        reviewed_image = rel in documentation_hashes
         if path.is_absolute() or ".." in path.parts or rel not in allowed:
             failures.append(f"{label}: file is outside the reviewed allowlist")
             continue
         if modes.get(rel, "100644") not in {"100644", "100755"} or (not args.staged and (ROOT / rel).is_symlink()):
             failures.append(f"{label}: symlink/submodule publication is blocked")
             continue
-        if any(x in BLOCKED_PARTS or x.startswith((".browser-", ".interop-", ".real-resume-", "design-backup-")) for x in path.parts) or path.suffix.lower() in BLOCKED_SUFFIXES or path.name in BLOCKED_NAMES or path.name.startswith("progress") and path.suffix == ".json":
+        if any(x in BLOCKED_PARTS or x.startswith((".browser-", ".interop-", ".real-resume-", "design-backup-")) for x in path.parts) or (path.suffix.lower() in BLOCKED_SUFFIXES and not reviewed_image) or path.name in BLOCKED_NAMES or path.name.startswith("progress") and path.suffix == ".json":
             failures.append(f"{label}: generated, private or media file type is blocked")
             continue
         try:
             data = read(rel)
         except (OSError, subprocess.CalledProcessError):
             failures.append(f"{label}: candidate cannot be read")
+            continue
+        if reviewed_image:
+            if hashlib.sha256(data).hexdigest() != documentation_hashes[rel]:
+                failures.append(f"{label}: reviewed documentation image changed")
+            elif not documentation_webp(data):
+                failures.append(f"{label}: documentation image is malformed, too large or contains metadata")
             continue
         if rel in binary_hashes:
             if hashlib.sha256(data).hexdigest() != binary_hashes[rel]:

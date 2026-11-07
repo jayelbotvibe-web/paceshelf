@@ -12,6 +12,8 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 tools/audit-public-source.py
+      - name: Publication media boundary tests
+        run: python3 tools/audit-public-source.test.py
       - name: Metadata protocol tests
         run: node --test tools/library-protocol.test.cjs
       - name: Desktop durability tests
