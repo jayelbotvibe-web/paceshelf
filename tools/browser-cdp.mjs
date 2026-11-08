@@ -1,6 +1,7 @@
-export async function connectBrowser(port=9223) {
+export async function connectBrowser(port=9223,match=p=>p.type==='page') {
  const pages=await(await fetch(`http://127.0.0.1:${port}/json`)).json();
- const page=pages.find(p=>p.type==='page');
+ const page=pages.find(match);
+ if(!page)throw Error('No matching browser page is available');
  const socket=new WebSocket(page.webSocketDebuggerUrl);
  await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject});
  let seq=0;const pending=new Map();

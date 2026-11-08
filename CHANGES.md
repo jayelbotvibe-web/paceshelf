@@ -1,5 +1,19 @@
 # Changes
 
+## 0.2.0 — YouTube reference preview
+
+Add public/unlisted YouTube playlists or pasted video links to new or existing
+collections. Preview imports, reuse stable video identities and append playlist
+updates without resetting progress, completion, labels or ordering. Online and
+local videos can share a collection.
+
+Official embedded playback lives in an isolated desktop origin or a separate
+bridge-free Android WebView. It supports tracked resume, bookmarks, completion and
+consecutive lessons, while retaining YouTube controls and requiring internet.
+Loading a provider is explicit. Android can start an app-private device-only library
+without storage access. No video downloading, account credentials or maintainer
+backend is introduced. Existing clients must be updated to read YouTube records.
+
 ## 0.1.0 — development preview
 
 PaceShelf starts from the offline Android/Ubuntu player with a separate public

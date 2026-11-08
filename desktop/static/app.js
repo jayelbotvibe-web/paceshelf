@@ -10,6 +10,9 @@
     library: $("#courses-view"), watch: $("#watch-view"), list: $("#watch-list"),
     seek: $("#seek-slider"), play: $("#play-pause-btn"), speed: $("#speed-btn"),
   };
+  el.video=new window.PaceShelfOnline.Media(el.video);
+  const youtube=window.PaceShelfYouTube;
+  const thumbnail=v=>v.provider==="youtube"?'<span class="youtube-mark" aria-label="YouTube">YouTube</span>':`<img src="./api/thumb?path=${encodeURIComponent(v.id)}" alt="" loading="lazy" decoding="async"/>`;
   const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.7, 1.75, 2];
   const LOCAL_SAVE_INTERVAL_MS = 5000;
   let shelf = null, metadataRevision = "", catalog = [], metadataBlocked = false;
@@ -69,7 +72,7 @@
     dialog.showModal();
     if (id === "#options") api("./api/status").then(updateConnection).catch(() => {});
   }
-  function closeSheet(dialog) { dialog.close(); dialog.classList.add("hidden"); }
+  function closeSheet(dialog) { if(dialog.id==='youtube-sheet')resetYouTubePreview();dialog.close(); dialog.classList.add("hidden"); }
   function closeSheets() { for (const dialog of $$("dialog[open]")) closeSheet(dialog); }
   for (const dialog of $$("dialog")) {
     dialog.addEventListener("click", event => { if (event.target === dialog) {
@@ -83,7 +86,8 @@
   function updateConnection(status) {
     libraryReady = status.ready;
     $("#drive-label").textContent = status.ready ? "Safely remove" : "Connect library";
-    $("#drive-status").setAttribute("aria-label", status.ready ? "Safely remove SSD" : "Choose your course library");
+    if(status.deviceLibrary){$("#drive-label").textContent="Library settings";$("#drive-status").setAttribute('aria-label','Library settings');}
+    $("#drive-status").setAttribute("aria-label", status.deviceLibrary ? "Library settings" : status.ready ? "Safely remove SSD" : "Choose your course library");
     $("#drive-status").disabled = false;
     $("#watch-eject-btn").disabled = !status.ready;
     $("#eject-btn").disabled = !status.ready;
@@ -95,6 +99,7 @@
       : "Your library is available offline";
     const previousShared=connection?.shared;
     connection = status;
+    renderLibrarySaveStatus();
     const lastVerified = status.verifiedAt ? new Date(status.verifiedAt).toLocaleString() : "Not confirmed";
     $("#history-status").textContent = `${shelf?.all("resume").filter(r=>r.value).length || 0} saved positions · Last verified portable save: ${lastVerified}`;
     if(status.ready && status.mode!=="device" && !status.shared && status.syncError && previousShared!==false) notice("Portable save could not be verified. Progress is on this device only. Open Library settings for details.","sync");
@@ -104,6 +109,10 @@
     $("#save-indicator").innerHTML = icon(state === "shared" ? "check" : "drive") + label;
     $("#save-indicator").dataset.state = state;
     $("#storage-mode").value=status.mode || "portable";
+    $("#storage-mode option[value=portable]").disabled=!!status.deviceLibrary;
+    $("#add-youtube-btn").disabled=!status.ready || metadataBlocked;
+    for(const id of ['#watch-eject-btn','#eject-btn'])$(id).classList.toggle('hidden',!!status.deviceLibrary);
+    $("#device-library-btn").classList.toggle('hidden',!window.Android || status.ready);
     if (!window.Android) {
       $("#folder-btn").classList.add("hidden");
       $("#setup-folder-btn").classList.add("hidden");
@@ -124,7 +133,7 @@
         ? "Drive activity is stopped. Unmount USB storage in My Files before unplugging. To continue watching instead, tap Reconnect SSD."
         : status.error || (status.selected
         ? "Reconnect your SSD to pick up where you left off. If your library has moved, choose its course folder again."
-        : "Connect your SSD and choose its Courses folder. Your videos stay on the drive, and your progress goes with you.");
+        : "Choose a folder of personal videos, or start a device-only library for YouTube.");
       $("#reconnect-btn").classList.toggle("hidden", !status.selected);
       setTopbarH(); return;
     }
@@ -153,6 +162,7 @@
   }
 
   function renderLibrary() {
+    renderLibrarySaveStatus();
     const stats = courses.map(c => ({ course:c, progress:courseProgress(c) }));
     const total = stats.reduce((sum, item) => sum + item.progress.total, 0);
     $("#library-course-count").textContent = courses.length;
@@ -162,6 +172,13 @@
     $("#completed-count").textContent = stats.filter(item => item.progress.total > 0 && item.progress.done === item.progress.total).length;
     $("#favorites-count").textContent = courses.filter(c => c.favorite).length;
     renderContinue(); renderCourseCards();
+  }
+  function renderLibrarySaveStatus(){
+    if(!connection)return;
+    const online=courses.some(c=>videosIn(c).some(v=>v.provider==='youtube'));
+    $('#library-save-status').textContent=online
+      ? (connection.shared?'Library metadata saved to drive':'Library metadata saved on this device')+' · YouTube requires internet'
+      : connection.ready?(connection.shared?'Available offline · Progress saved to your SSD':'Available offline · Progress saved on this device'):'Your library is available offline';
   }
   function renderContinue() {
     const latest=protocol.newest(courses.flatMap(course=>videosIn(course).map(v=>({...v,course}))));
@@ -174,7 +191,7 @@
       <span class="continue-info"><span class="continue-topline"><span class="course-pill">${esc(courseCode(latestCourse.name))}</span><span class="muted">${progress.percent}% complete</span></span>
       <h3>${esc(courseTitle(latestCourse.name))}</h3><p class="continue-lesson">Lesson ${all.indexOf(video)+1} of ${all.length} · ${esc(video.title)}</p>
       <span class="continue-bottom"><span class="continue-action">${icon("play")}${resume ? "Resume at " + fmtTime(video.position) : "Continue course"}</span><span class="continue-progress"><span style="width:${progress.percent}%"></span></span></span></span>
-      <span class="continue-art"><img src="./api/thumb?path=${encodeURIComponent(video.id)}" alt="" loading="lazy"/>${icon("play")}</span></button>`;
+      <span class="continue-art">${thumbnail(video)}${icon("play")}</span></button>`;
     $("#continue-card button").addEventListener("click", () => openCourse(latestCourse.id));
   }
   function renderCourseCards() {
@@ -204,6 +221,7 @@
   }
   function showCourses() {
     window.coursePlayerPause();
+    if(el.video.online)el.video.release();
     $("#lesson-search").blur();
     if (!libraryReady) return;
     document.body.classList.remove("watch", "searching-lessons");
@@ -246,7 +264,7 @@
     el.list.innerHTML = currentCourse.sections.map(section => `<details class="watch-section" open><summary>${icon("chevron")}<span>${esc(!section.name || section.name === "." ? "Lessons" : section.name)}</span><small>${section.videos.length}</small></summary><div>${section.videos.map(video => {
       number++;
       return `<button class="watch-item" data-id="${esc(video.id)}" data-entry="${esc(video.entryId)}" data-search="${esc((video.title+" "+section.name+" "+number).toLowerCase())}" aria-label="Lesson ${number}: ${esc(video.title)}">
-        <span class="wi-num">${String(number).padStart(2,"0")}</span><span class="wi-thumb"><img src="./api/thumb?path=${encodeURIComponent(video.id)}" alt="" loading="lazy" decoding="async"/><span class="wi-progress" style="width:${percent(video)}%"></span></span>
+        <span class="wi-num">${String(number).padStart(2,"0")}</span><span class="wi-thumb">${thumbnail(video)}<span class="wi-progress" style="width:${percent(video)}%"></span></span>
         <span class="wi-info"><span class="wi-title">${esc(video.title)}</span><span class="wi-meta">${lessonMeta(video)}</span></span><span class="wi-check${isDone(video) ? "" : " hidden"}">${icon("check")}</span></button>`;
     }).join("")}</div></details>`).join("");
     for (const row of el.list.querySelectorAll(".watch-item")) {
@@ -311,8 +329,19 @@
     draggingSeek = false; el.seek.disabled = true; el.seek.value = 0; el.seek.style.setProperty("--seek","0%");
     $("#elapsed-time").textContent = fmtTime(pendingSeek); $("#duration-time").textContent = fmtTime(video.duration);
     $("#video-loading").classList.remove("hidden");
-    el.video.src = "./api/video?path=" + encodeURIComponent(video.id); el.video.load(); el.video.playbackRate = speed;
-    el.video.play().catch(() => updatePlaybackState());
+    $("#online-details").classList.toggle('hidden',video.provider!=="youtube");
+    $("#source-links").replaceChildren();
+    for(const ref of currentCourse.references||[]){
+      const b=document.createElement('button');b.className='text-btn';b.textContent='Open source playlist';b.onclick=()=>openYouTubeURL('playlist',ref.playlistId);$('#source-links').append(b);
+      const refresh=document.createElement('button');refresh.className='text-btn';refresh.textContent='Review playlist updates';refresh.onclick=()=>{$('#add-youtube-btn').click();$('#youtube-input').value=youtube.playlistURL(ref.playlistId);};$('#source-links').append(refresh);
+    }
+    if(video.provider==="youtube"){
+      el.video.useYouTube(video,pendingSeek);loadingVideo=false;el.seek.disabled=true;
+      $("#video-loading").classList.add('hidden');updateTimeline();updatePlaybackState();
+    }else{
+      el.video.src = "./api/video?path=" + encodeURIComponent(video.id); el.video.load(); el.video.playbackRate = speed;
+      el.video.play().catch(() => updatePlaybackState());
+    }
     for (const item of el.list.querySelectorAll(".watch-item")) {
       const selected = item.dataset.entry === video.entryId;
       item.classList.toggle("current",selected);
@@ -366,6 +395,7 @@
     for (const option of $$(".speed-option")) {
       const selected = Number(option.dataset.speed) === speed;
       option.classList.toggle("selected",selected); option.setAttribute("aria-pressed",String(selected));
+      option.disabled=el.video.online&&el.video.rates.length>0&&!el.video.rates.includes(Number(option.dataset.speed));
     }
   }
   function changeSpeed(direction) {
@@ -384,7 +414,7 @@
     }).catch(() => {}),delay);
   }
   function saveProgress(force) {
-    if (removing || loadingVideo || !currentVideo || !Number.isFinite(el.video.duration) || el.video.duration <= 0) return saveChain;
+    if (removing || loadingVideo || el.video.foreign || !currentVideo || !Number.isFinite(el.video.duration) || el.video.duration <= 0) return saveChain;
     const now = Date.now();
     if (!force && now-lastSavedAt < LOCAL_SAVE_INTERVAL_MS) return saveChain;
     const position = el.video.currentTime, duration = el.video.duration;
@@ -462,12 +492,12 @@
   el.video.addEventListener("loadedmetadata", () => {
     el.video.playbackRate = speed; el.seek.disabled = false;
     const resume = pendingSeek; pendingSeek = null;
-    if (resume > 0) {
+    if (resume > 0 && (!el.video.online || Math.abs(el.video.currentTime-resume)>2)) {
       try { el.video.currentTime = Math.min(resume,el.video.duration); }
       catch (_) { /* A provider may not seek until playback starts. */ }
     }
     loadingVideo = false;
-    updateTimeline(); scheduleSave();
+    updateTimeline(); updateStudy(); scheduleSave();
   });
   el.video.addEventListener("seeked", () => { loadingVideo = false; updateTimeline(); scheduleSave(); });
   el.video.addEventListener("timeupdate", () => { updateTimeline(); saveProgress(false); });
@@ -476,10 +506,27 @@
   el.video.addEventListener("pause", () => { saveProgress(true); updatePlaybackState(); if (!removing) flushProgress(); });
   el.video.addEventListener("waiting", () => { if (!el.video.paused) $("#video-loading").classList.remove("hidden"); });
   el.video.addEventListener("canplay", () => $("#video-loading").classList.add("hidden"));
-  el.video.addEventListener("ended", () => { saveProgress(true); setCompletion(true); updatePlaybackState(); if (shelf?.get("preference/playback")?.autoNext !== false) nextVideo(); });
+  el.video.addEventListener("ended", () => {
+    saveProgress(true);setCompletion(true);updatePlaybackState();
+    const r=el.stage.getBoundingClientRect(),visible=!document.hidden && (window.Android || Math.max(0,Math.min(r.bottom,innerHeight)-Math.max(r.top,0))>=r.height*.5);
+    if(shelf?.get("preference/playback")?.autoNext!==false && (!el.video.online||visible))nextVideo();
+  });
   el.video.addEventListener("error", () => {
     loadingVideo = false; $("#video-loading").classList.add("hidden"); updatePlaybackState();
-    notice("This lesson couldn’t be played. Check the SSD connection, or try another lesson.");
+    notice(el.video.online?el.video.errorMessage || "YouTube could not play this video. Check your connection or use Open original video.":"This lesson couldn’t be played. Check the SSD connection, or try another lesson.");
+  });
+  el.video.addEventListener('foreign',()=>{el.seek.disabled=true;updateTimeline();updateStudy();notice('YouTube opened a different video. Progress tracking for this lesson is paused.');});
+  el.video.addEventListener('ratechange',()=>{
+    if(!el.video.online || !Number.isFinite(el.video.duration) || el.video.duration<=0)return;
+    const rate=el.video.playbackRate;
+    if(SPEEDS.includes(rate)&&speed!==rate){
+      speed=rate;
+      if(shelf&&!metadataBlocked){shelf.put('preference/playback',{...shelf.get('preference/playback'),speed});persistLibrary().catch(()=>{});}
+    }
+    el.speed.innerHTML=rate+'× <span>speed</span>';
+    el.speed.setAttribute('aria-label','Playback speed: '+rate+' times');
+    for(const option of $$('.speed-option')){option.disabled=el.video.rates.length>0&&!el.video.rates.includes(Number(option.dataset.speed));option.classList.toggle('selected',Number(option.dataset.speed)===rate);}
+    updateStudy();
   });
   el.seek.addEventListener("input", () => {
     draggingSeek = true; el.seek.style.setProperty("--seek",el.seek.value/10+"%");
@@ -498,6 +545,8 @@
 
   $("#play-pause-btn").addEventListener("click",togglePlayback);
   $("#big-play-btn").addEventListener("click",togglePlayback);
+  $("#online-open").addEventListener('click',()=>el.video.open().catch(e=>notice(e.message)));
+  $("#open-youtube-link").addEventListener('click',()=>{if(currentVideo?.videoId)openYouTubeURL('video',currentVideo.videoId);});
   el.video.addEventListener("click",togglePlayback);
   $("#fullscreen-btn").addEventListener("click",toggleFullscreen);
   $("#prev-btn").addEventListener("click",prevVideo);
@@ -529,7 +578,7 @@
       notice(result.unmounted ? "SSD saved and safely unmounted. You can unplug it." : result.ssdSaved ? "Saved to SSD. Finish with Eject in Ubuntu Files." : "SSD save failed. Progress is saved on this laptop only.");
     } catch (_) { removing = false; notice("The SSD save could not be verified. Reconnect and retry before unplugging."); }
   }
-  $("#drive-status").addEventListener("click", () => libraryReady ? safelyRemove() : openSheet("#options"));
+  $("#drive-status").addEventListener("click", () => libraryReady && !connection?.deviceLibrary ? safelyRemove() : openSheet("#options"));
   $("#watch-eject-btn").addEventListener("click", safelyRemove);
   for (const selector of ["#folder-btn","#setup-folder-btn"]) $(selector).addEventListener("click", () => {
     closeSheets(); window.coursePlayerPause();
@@ -606,7 +655,7 @@
   function updateStudy() {
     const selected=!!currentVideo;
     $("#complete-btn").disabled=!selected || metadataBlocked;
-    $("#bookmark-btn").disabled=!selected || metadataBlocked;
+    $("#bookmark-btn").disabled=!selected || metadataBlocked || el.video.foreign || (el.video.online&&!Number.isFinite(el.video.duration));
     $("#complete-btn").textContent=currentVideo?.done?"Mark incomplete":"Mark complete";
     $("#complete-btn").setAttribute("aria-pressed",String(currentVideo?.done===true));
     $("#auto-next").checked=shelf?.get("preference/playback")?.autoNext!==false;
@@ -639,9 +688,10 @@
   }
   function setCompletion(done) {
     if(!currentVideo || metadataBlocked || !shelf)return;
+    const completedVideo=currentVideo;
     undoCompletion={key:"completion/"+currentVideo.entryId,value:shelf.get("completion/"+currentVideo.entryId)};
     shelf.put(undoCompletion.key,{done});currentVideo.done=done;
-    persistLibrary().then(()=>{refreshItem(currentVideo);updateStudy();$("#undo-completion").classList.remove("hidden");}).catch(()=>{});
+    persistLibrary().then(()=>{refreshItem(completedVideo);updateStudy();$("#undo-completion").classList.remove("hidden");}).catch(()=>{});
   }
   $("#complete-btn").onclick=()=>setCompletion(!currentVideo.done);
   $("#undo-completion").onclick=()=>{
@@ -706,6 +756,72 @@
     notice("Library backup exported. It contains metadata only; videos are not included.");
   }
   let pendingImport=null;
+  let youtubeInspection=null,youtubeDraft=null;
+  const externalPages={terms:'https://www.youtube.com/t/terms',privacy:'https://policies.google.com/privacy',paceshelf:'https://github.com/jayelbotvibe-web/paceshelf/blob/main/docs/PRIVACY.md'};
+  function openYouTubeURL(kind,id){
+    const url=kind==='video'?youtube.videoURL(id):kind==='playlist'?youtube.playlistURL(id):externalPages[kind];
+    if(!url)return;
+    window.coursePlayerPause();
+    if(window.Android)Android.openYouTubeLink(kind,id||'');else window.open(url,'_blank','noopener');
+  }
+  function resetYouTubePreview(){
+    youtubeInspection?.close();youtubeInspection=null;youtubeDraft=null;
+    $('#youtube-provider-preview').replaceChildren();$('#youtube-provider-preview').classList.add('hidden');
+    $('#youtube-confirm').classList.add('hidden');$('#youtube-preview-list').replaceChildren();$('#youtube-preview-status').textContent='';
+  }
+  function previewYouTube(draft){
+    youtubeDraft=draft;$('#youtube-preview-list').replaceChildren();
+    const count=draft.videoIds.length;
+    const target=shelf.get('collection/'+$('#youtube-target').value),existing=new Set((target?.entries||[]).map(e=>shelf.get('media/'+e.mediaId)?.videoId).filter(Boolean));
+    const fresh=draft.videoIds.filter(id=>!existing.has(id)).length;
+    $('#youtube-preview-status').textContent=count+' unique videos found; '+fresh+' new to this collection.'+(draft.playlistId?' Only videos returned by YouTube are included; private, unavailable or omitted items may be missing. Compare with the original playlist.':'');
+    for(const id of draft.videoIds.slice(0,100)){const item=document.createElement('p');item.textContent='YouTube video '+id;$('#youtube-preview-list').append(item);}
+    if(count>100){const more=document.createElement('p');more.textContent='And '+(count-100)+' more videos.';$('#youtube-preview-list').append(more);}
+    $('#youtube-confirm').classList.toggle('hidden',!count);
+  }
+  $('#add-youtube-btn').onclick=()=>{
+    if(!shelf||metadataBlocked){notice('Open a writable library before adding YouTube references.');return;}
+    window.coursePlayerPause();resetYouTubePreview();
+    $('#youtube-target').replaceChildren(new Option('New collection',''));
+    for(const c of courses)if(!shelf.conflicted('collection/'+c.id))$('#youtube-target').append(new Option(c.name,c.id));
+    $('#youtube-target').value=!el.watch.classList.contains('hidden')&&currentCourse?currentCourse.id:'';
+    $('#youtube-title').value='';$('#youtube-input').value='';openSheet('#youtube-sheet');
+  };
+  for(const id of ['#youtube-input','#youtube-target','#youtube-title'])$(id).addEventListener('input',resetYouTubePreview);
+  for(const b of $$('[data-youtube-policy]'))b.onclick=event=>{event.preventDefault();openYouTubeURL(b.dataset.youtubePolicy,'');};
+  $('#youtube-form').onsubmit=async event=>{
+    event.preventDefault();resetYouTubePreview();
+    try{
+      if(!$('#youtube-target').value&&!$('#youtube-title').value.trim())throw Error('Give the new collection a title.');
+      const draft=youtube.input($('#youtube-input').value);
+      if(draft.videoIds.length){previewYouTube(draft);return;}
+      $('#youtube-preview-status').textContent='Loading the playlist from YouTube… The player may need a moment or a tap to make its list available.';
+      $('#youtube-provider-preview').classList.remove('hidden');
+      const inspection=new window.PaceShelfOnline.Session({mode:'inspect',playlistId:draft.playlistId},$('#youtube-provider-preview'),value=>{
+        if(youtubeInspection!==inspection)return;
+        if(value.error){$('#youtube-preview-status').textContent=value.error+' You can paste individual video links instead.';return;}
+        if(value.playlistIds?.length){
+          previewYouTube({...draft,videoIds:value.playlistIds});
+          // Capture the ID list before releasing the unprivileged player.
+          inspection.close();youtubeInspection=null;$('#youtube-provider-preview').classList.add('hidden');
+        }else if(value.closed&&!youtubeDraft)$('#youtube-preview-status').textContent='Playlist preview closed. Try again or paste individual video links.';
+      });
+      youtubeInspection=inspection;await inspection.open();
+    }catch(error){$('#youtube-preview-status').textContent=error.message;}
+  };
+  $('#youtube-confirm').onclick=async()=>{
+    if(!youtubeDraft||!shelf||metadataBlocked)return;
+    const button=$('#youtube-confirm');button.disabled=true;
+    try{
+      const target=$('#youtube-target').value||null;
+      const result=shelf.addYouTube({...youtubeDraft,target,title:target?shelf.get('collection/'+target)?.title:$('#youtube-title').value.trim()});
+      await persistLibrary();closeSheets();rebuildCourses();libraryFilter='all';$('#course-search').value='';showCourses();
+      notice(result.added+' YouTube references added. Open the collection to play, rename or reorder lessons.');
+    }catch(error){notice(error.message);}finally{button.disabled=false;}
+  };
+  $('#device-library-btn').onclick=()=>{
+    if(window.Android)Android.openDeviceLibrary();
+  };
   window.paceShelfImport=async text=>{
     try{
       if(text.length>16*1024*1024)throw Error("Backup is too large.");

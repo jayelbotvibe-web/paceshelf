@@ -30,7 +30,7 @@ if [[ -f "$runtime_dir/address" ]]; then
   if python3 - "$status_file" "$library_root" <<'PY'
 import json,sys
 try:
- s=json.load(open(sys.argv[1]));ok=s.get('protocol')==3 and s.get('version')=='0.1.0' and s.get('root')==sys.argv[2] and s.get('ready')
+ s=json.load(open(sys.argv[1]));ok=s.get('protocol')==3 and s.get('version')=='0.2.0' and s.get('root')==sys.argv[2] and s.get('ready')
 except Exception:ok=False
 sys.exit(0 if ok else 1)
 PY

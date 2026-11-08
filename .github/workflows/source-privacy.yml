@@ -15,7 +15,7 @@ jobs:
       - name: Publication media boundary tests
         run: python3 tools/audit-public-source.test.py
       - name: Metadata protocol tests
-        run: node --test tools/library-protocol.test.cjs
+        run: node --test tools/library-protocol.test.cjs tools/youtube.test.cjs
       - name: Desktop durability tests
         working-directory: desktop
         run: |

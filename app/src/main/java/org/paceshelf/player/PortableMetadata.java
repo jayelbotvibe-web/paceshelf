@@ -37,7 +37,7 @@ final class PortableMetadata implements AutoCloseable {
 
     PortableMetadata(Context context,Uri root,String key) throws Exception {
         this.context=context;resolver=context.getContentResolver();this.root=root;
-        deviceOnly=context.getSharedPreferences("paceshelf",0).getBoolean("deviceOnly",false);
+        deviceOnly=root==null || context.getSharedPreferences("paceshelf",0).getBoolean("deviceOnly",false);
         local=new AtomicFile(new File(context.getFilesDir(),"library-"+key+".json"));
         newIdentity=!local.getBaseFile().exists();
         if(local.getBaseFile().exists())try(InputStream in=local.openRead()){current=read(in);hydrate(decode(current),false);}
@@ -202,6 +202,7 @@ final class PortableMetadata implements AutoCloseable {
     synchronized void setMode(String mode) throws Exception {
         if(!mode.equals("device") && !mode.equals("portable"))throw new IOException("Choose device or portable storage");
         if(closed)throw new IOException("Reconnect your library first");
+        if(mode.equals("portable")&&root==null)throw new IOException("Select a folder before using portable storage. Export a backup to transfer this device library.");
         flush();deviceOnly=mode.equals("device");context.getSharedPreferences("paceshelf",0).edit().putBoolean("deviceOnly",deviceOnly).commit();
         if(deviceOnly){shared=false;if(!blocked)problem="";if(pending!=null)pending.cancel(false);pending=null;}
         else if(current!=null){dirty=true;flushLocked();}

@@ -28,15 +28,18 @@
         if (p === null) continue; // Keep deletion records so an old device cannot resurrect an item.
         if (!object(p)) throw Error("Invalid record value");
         const kind=key.split("/")[0];
-        const fields={resume:["position","duration","updatedAt","entryId","collectionId"],media:["path","size"],completion:["done"],collection:["source","title","favorite","entries"],bookmark:["mediaId","position","title"],preference:key==="preference/playback"?["speed","autoNext"]:key==="preference/migration"?["legacyImported"]:[]}[kind];
+        const fields={resume:["position","duration","updatedAt","entryId","collectionId"],media:["path","size","provider","videoId"],completion:["done"],collection:["source","title","favorite","entries","references"],bookmark:["mediaId","position","title"],preference:key==="preference/playback"?["speed","autoNext"]:key==="preference/migration"?["legacyImported"]:[]}[kind];
         if(Object.keys(p).some(k=>!fields.includes(k)) || kind==="preference" && !fields.length)throw Error("Unknown metadata fields. Update PaceShelf before importing.");
         if (key.startsWith("resume/") && (!Number.isFinite(p.position) || !Number.isFinite(p.duration) || p.position < 0 || p.duration <= 0 || p.position > p.duration || typeof p.updatedAt !== "string" || p.updatedAt.length>80)) throw Error("Invalid resume position");
         if(kind==="resume" && (p.entryId!==undefined && !token(p.entryId) || p.collectionId!==undefined && !token(p.collectionId)))throw Error("Invalid resume entry");
-        if (key.startsWith("media/") && (typeof p.path !== "string" || !safePath(p.path) || !Number.isSafeInteger(p.size) || p.size < 0)) throw Error("Invalid media locator");
+        if (kind==="media" && (p.provider===undefined
+          ? typeof p.path!=="string" || !safePath(p.path) || !Number.isSafeInteger(p.size) || p.size<0 || p.videoId!==undefined
+          : p.provider!=="youtube" || typeof p.videoId!=="string" || !/^[A-Za-z0-9_-]{11}$/.test(p.videoId) || p.path!==undefined || p.size!==undefined)) throw Error("Invalid media locator");
         if (key.startsWith("completion/") && typeof p.done !== "boolean") throw Error("Invalid completion");
         if (key.startsWith("collection/") && (typeof p.title !== "string" || p.title.length > 500 || typeof p.source !== "string" || !safePath(p.source) || !Array.isArray(p.entries) || p.entries.length > LIMIT || p.entries.some(e => !object(e) || !token(e.id) || !token(e.mediaId) || typeof e.title !== "string" || e.title.length > 500 || typeof e.section !== "string" || e.section.length > 2000))) throw Error("Invalid collection");
         if (key.startsWith("bookmark/") && (!token(p.mediaId) || !Number.isFinite(p.position) || p.position < 0 || typeof p.title !== "string" || p.title.length > 500)) throw Error("Invalid bookmark");
         if(kind==="collection" && (typeof p.favorite!=="boolean" || new Set(p.entries.map(e=>e.id)).size!==p.entries.length || p.entries.some(e=>Object.keys(e).some(k=>!["id","mediaId","title","section"].includes(k)))))throw Error("Invalid collection entries");
+        if(kind==="collection" && p.references!==undefined && (!Array.isArray(p.references) || p.references.length>100 || p.references.some(r=>!object(r) || r.provider!=="youtube" || typeof r.playlistId!=="string" || !/^[A-Za-z0-9_-]{10,100}$/.test(r.playlistId) || Object.keys(r).some(k=>!["provider","playlistId"].includes(k)))))throw Error("Invalid online source reference");
         if(key==="preference/playback" && (p.speed!==undefined && ![0.5,0.75,1,1.25,1.5,1.7,1.75,2].includes(p.speed) || p.autoNext!==undefined && typeof p.autoNext!=="boolean"))throw Error("Invalid playback preferences");
         if(key==="preference/migration" && typeof p.legacyImported!=="boolean")throw Error("Invalid migration marker");
       }
@@ -101,7 +104,7 @@
     reconcile(catalog) {
       const importLegacy=!this.get("preference/migration")?.legacyImported;
       const legacyPositions=[];
-      const media = new Map(this.all("media").filter(r => r.value).map(r => [r.value.path+":"+r.value.size,r.key.split("/")[1]]));
+      const media = new Map(this.all("media").filter(r => r.value && !r.value.provider).map(r => [r.value.path+":"+r.value.size,r.key.split("/")[1]]));
       const existing = new Map(this.all("collection").filter(r => r.value).map(r => [r.value.source,r]));
       for (const c of catalog) {
         if(this.all("collection").some(r=>r.conflict && this.variants(r.key).some(v=>v.value?.source===c.id)))continue;
@@ -144,18 +147,46 @@
         const c=r.value, sections=[];
         for (const entry of c.entries) {
           const media=this.get("media/"+entry.mediaId); if (!media) continue;
-          const v=available.get(media.path+":"+media.size), resume=this.get("resume/"+entry.mediaId);
+          const online=media.provider==="youtube";
+          const v=online?null:available.get(media.path+":"+media.size), resume=this.get("resume/"+entry.mediaId);
           const collectionId=r.key.split("/")[1];
-          const video={...v,id:media.path,mediaId:entry.mediaId,entryId:entry.id,collectionId,title:entry.title,section:entry.section,
+          const video={...v,id:online?"youtube/"+media.videoId:media.path,provider:media.provider,videoId:media.videoId,mediaId:entry.mediaId,entryId:entry.id,collectionId,title:entry.title,section:entry.section,
             position:resume?.position || 0,duration:resume?.duration || 0,updatedAt:resume?.updatedAt || "",done:this.get("completion/"+entry.id)?.done === true,
             resumeRevision:this.variants("resume/"+entry.mediaId)[0],active:resume?.entryId===entry.id && resume?.collectionId===collectionId,
-            conflict:this.conflicted("resume/"+entry.mediaId),available:!!v};
+            conflict:this.conflicted("resume/"+entry.mediaId),available:online||!!v};
           let section=sections[sections.length-1];
           if(!section || section.name!==entry.section){section={name:entry.section,videos:[]};sections.push(section);}
           section.videos.push(video);
         }
-        return {id:r.key.split("/")[1],name:c.title,favorite:c.favorite,source:c.source,videos:c.entries.length,sections};
+        return {id:r.key.split("/")[1],name:c.title,favorite:c.favorite,source:c.source,references:c.references || [],videos:c.entries.length,sections};
       });
+    }
+    addYouTube({title,videoIds,playlistId=null,target=null}) {
+      if(!Array.isArray(videoIds)||!videoIds.length||videoIds.length>500||videoIds.some(id=>typeof id!=="string"||!/^[A-Za-z0-9_-]{11}$/.test(id)))throw Error("Choose between 1 and 500 valid YouTube videos.");
+      if(playlistId!==null && (typeof playlistId!=="string"||!/^[A-Za-z0-9_-]{10,100}$/.test(playlistId)))throw Error("Invalid playlist reference");
+      if(typeof title!=="string"||!title.trim()||title.length>500)throw Error("Give the collection a title.");
+      const id=target||uuid(),key="collection/"+id;
+      const existing=target?this.get(key):null;
+      if(target && (!existing||this.conflicted(key)))throw Error("Choose an available collection without conflicts.");
+      const collection=existing?copy(existing):{source:"youtube/"+id,title:title.trim(),favorite:false,entries:[]};
+      const media=new Map(this.all("media").filter(r=>r.value?.provider==="youtube"&&!r.conflict).map(r=>[r.value.videoId,r.key.split("/")[1]]));
+      const newMedia=[],entries=[];
+      for(const videoId of new Set(videoIds)){
+        let mediaId=media.get(videoId);
+        if(!mediaId){mediaId=uuid();media.set(videoId,mediaId);newMedia.push(["media/"+mediaId,{provider:"youtube",videoId}]);}
+        if(!collection.entries.some(e=>e.mediaId===mediaId))entries.push({id:uuid(),mediaId,title:"YouTube video "+videoId,section:"YouTube"});
+      }
+      collection.entries.push(...entries);
+      if(playlistId){
+        collection.references=collection.references||[];
+        if(!collection.references.some(r=>r.playlistId===playlistId))collection.references.push({provider:"youtube",playlistId});
+      }
+      // Validate the whole batch before touching live state (including record/vector limits).
+      const draft=new Library(this.state,this.device);
+      for(const [k,v] of newMedia)draft.put(k,v);
+      draft.put(key,collection);validate(draft.state);
+      this.state=draft.state;
+      return {id,added:entries.length};
     }
   }
   const api={empty,validate,merge,Library,uuid,safePath,newest};

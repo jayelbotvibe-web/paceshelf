@@ -119,6 +119,7 @@ final class LocalServer implements Closeable {
                     case "": case "index.html": asset(out,"index.html","text/html",head); break;
                     case "app.js": asset(out,"app.js","application/javascript",head); break;
                     case "library.js": asset(out,"library.js","application/javascript",head); break;
+                    case "youtube.js": case "online.js": asset(out,path,"application/javascript",head); break;
                     case "style.css": asset(out,"style.css","text/css",head); break;
                     case "fonts/InterVariable.woff2": asset(out,"fonts/InterVariable.woff2","font/woff2",head); break;
                     default: send(out,404,"text/plain","Not found");

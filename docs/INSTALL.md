@@ -1,6 +1,6 @@
 # Install PaceShelf
 
-This is the **0.1.0 development preview**. Use backed-up videos and keep a separate
+This is the **0.2.0 development preview**. Use backed-up videos and keep a separate
 metadata backup. You do not need Android build tools or Go to use the downloads.
 
 ## Android phones and tablets
@@ -8,7 +8,7 @@ metadata backup. You do not need Android build tools or Go to use the downloads.
 Requires **Android 9 or newer** and an up-to-date Android System WebView. External
 drives must be recognized by Android before PaceShelf can access their folders.
 
-1. Download [PaceShelf-0.1.0-preview-debug.apk](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.1.0-preview/PaceShelf-0.1.0-preview-debug.apk)
+1. Download [PaceShelf-0.2.0-preview-debug.apk](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.0-preview/PaceShelf-0.2.0-preview-debug.apk)
    from this project's release page.
 2. Open the downloaded APK. If prompted, allow the browser or file manager you
    used to install this app. You can turn that permission off after installation.
@@ -17,6 +17,13 @@ drives must be recognized by Android before PaceShelf can access their folders.
 4. Open **Library settings → Save library metadata**. Choose **On this device** for
    local history or **Portable library** to write progress beside videos on a writable drive.
 5. Open a collection and select a lesson.
+
+For YouTube without a video folder, select **Start a device-only YouTube library**
+on the opening screen instead. Use **Add YouTube**, preview a playlist or paste
+video links, then confirm. Online playback needs internet. See [YouTube instructions](YOUTUBE.md).
+
+For an upgrade, install this APK over the matching preview without clearing data.
+Update every device to 0.2.0 before sharing metadata containing YouTube references.
 
 This APK is **debug-signed**, not a stable release. A future release with a different
 signer may require uninstalling this preview first. Export a library backup before
@@ -31,15 +38,19 @@ not recognized. Folder-picker restrictions also vary by Android version/provider
 For ordinary **x86_64 / AMD64** Ubuntu PCs. Check `uname -m` if unsure: this package
 matches `x86_64`, not `aarch64` or `arm64`.
 
-1. Download [paceshelf_0.1.0-preview1_amd64.deb](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.1.0-preview/paceshelf_0.1.0-preview1_amd64.deb).
+1. Download [paceshelf_0.2.0-preview1_amd64.deb](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.0-preview/paceshelf_0.2.0-preview1_amd64.deb).
 2. Open a terminal in the folder containing that file and install it:
 
    ```sh
-   sudo apt install ./paceshelf_0.1.0-preview1_amd64.deb
+   sudo apt install ./paceshelf_0.2.0-preview1_amd64.deb
    ```
 
 3. Open **PaceShelf** from your applications menu and choose a video folder.
 4. Your browser opens the local player. Choose your storage mode in Library settings.
+
+An empty folder works for a YouTube-only collection. Select **Add YouTube** after
+opening it. Before upgrading, exit the old player with its save/removal flow so
+the previous local server does not keep the library's writer lock.
 
 Administrator access is for installing the package. **Run the player as your normal
 user.** Do not launch PaceShelf or `start.sh` with sudo.
@@ -59,7 +70,7 @@ No minimum Ubuntu/browser version has been established by the current test matri
 Use this if you prefer a per-user launcher or need the included ARM64 binary.
 **ARM64 is cross-compiled and has not been tested on ARM64 hardware.**
 
-1. Download [PaceShelf-Ubuntu-0.1.0-preview.tar.gz](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.1.0-preview/PaceShelf-Ubuntu-0.1.0-preview.tar.gz)
+1. Download [PaceShelf-Ubuntu-0.2.0-preview.tar.gz](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.0-preview/PaceShelf-Ubuntu-0.2.0-preview.tar.gz)
    and extract the entire archive.
 2. Install any missing launcher dependencies:
 
@@ -67,7 +78,7 @@ Use this if you prefer a per-user launcher or need the included ARM64 binary.
    sudo apt install zenity curl python3 xdg-utils util-linux
    ```
 
-3. Open a terminal inside the extracted **PaceShelf-Ubuntu-0.1.0-preview** folder:
+3. Open a terminal inside the extracted **PaceShelf-Ubuntu-0.2.0-preview** folder:
 
    ```sh
    bash install.sh
@@ -96,11 +107,11 @@ mode after review. Do not manually replace app-private metadata files. Read
 ## Download verification
 
 Every packaged download has a companion `.sha256` file on the
-[release page](https://github.com/jayelbotvibe-web/paceshelf/releases/tag/v0.1.0-preview).
+[release page](https://github.com/jayelbotvibe-web/paceshelf/releases/tag/v0.2.0-preview).
 On Ubuntu, put both files in the same directory and verify, for example:
 
 ```sh
-sha256sum -c paceshelf_0.1.0-preview1_amd64.deb.sha256
+sha256sum -c paceshelf_0.2.0-preview1_amd64.deb.sha256
 ```
 
 The checksum checks the downloaded bytes against the published digest. Preview

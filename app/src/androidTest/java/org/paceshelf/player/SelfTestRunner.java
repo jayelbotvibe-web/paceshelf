@@ -69,6 +69,20 @@ public final class SelfTestRunner extends Instrumentation {
                 check(!restoreReceipt.getString("device").equals(beforeRestore.getString("device")),"restoring another library establishes a fresh writer identity");
                 check(local.readState().getString("device").equals(restoreReceipt.getString("device")),"restore receipt and retained writer identity agree");local.close();
             }finally{DocumentsContract.deleteDocument(context.getContentResolver(),deviceDir);}
+            String onlineKey="native-test-"+UUID.randomUUID();
+            PortableMetadata online=new PortableMetadata(context,null,onlineKey);
+            JSONObject onlineRead=online.readState(),onlinePayload=new JSONObject(payload(15));
+            JSONObject syntheticMedia=new JSONObject().put("device","native").put("seq",14).put("context",new JSONObject()).put("value",new JSONObject().put("provider","youtube").put("videoId","AAAAAAAAAAA"));
+            onlinePayload.getJSONObject("records").put("media/demo",new JSONArray().put(syntheticMedia));
+            online.save(new JSONObject().put("payload",onlinePayload.toString()).put("expected",onlineRead.getString("revision")).toString());online.flush();
+            check(online.status().getString("mode").equals("device")&&!online.status().getBoolean("shared"),"online-only library needs no document provider or SSD");
+            check(new JSONObject(online.exportPayload()).getJSONObject("records").getJSONArray("media/demo").getJSONObject(0).getJSONObject("value").getString("provider").equals("youtube"),"native checkpoints preserve typed YouTube references");
+            boolean portableDenied=false;try{online.setMode("portable");}catch(Exception expected){portableDenied=true;}
+            check(portableDenied,"device-only online library cannot claim a portable save");online.close();
+            PortableMetadata reopenedOnline=new PortableMetadata(context,null,onlineKey);check(reopenedOnline.readState().getJSONArray("states").length()==1,"online-only history survives reopening");reopenedOnline.close();
+            check(OnlinePlayer.validateConfig("{\"mode\":\"play\",\"session\":\"synthetic_session_0123456789\",\"videoId\":\"AAAAAAAAAAA\"}").getString("videoId").equals("AAAAAAAAAAA"),"isolated player accepts a stable video identity");
+            boolean urlDenied=false;try{OnlinePlayer.validateConfig("{\"mode\":\"play\",\"session\":\"synthetic_session_0123456789\",\"videoId\":\"file:///sample.mp4\"}");}catch(Exception expected){urlDenied=true;}
+            check(urlDenied,"isolated player rejects file URLs as video identities");
             check(HttpRange.parse("bytes=2-4",10).length()==3,"video range seek remains available");
             check(new NaturalOrder().compare("Lesson 2","Lesson 10")<0,"natural lesson ordering remains available");
             result.putString("stream","PASS: "+checks+" native checks\n");

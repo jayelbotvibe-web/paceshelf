@@ -6,7 +6,7 @@ from source publication. No personal media or playback records are needed.
 ## Protocol and desktop durability
 
 ```sh
-node --test tools/library-protocol.test.cjs
+node --test tools/library-protocol.test.cjs tools/youtube.test.cjs
 cd desktop
 go test -race ./...
 go vet ./...
@@ -62,6 +62,37 @@ cover actual playback/seek, completion/undo, bookmarks, title/favorite editing,
 backup preview, storage modes and responsive widths. Android adds lifecycle
 suspension/resume checks. Screenshots and raw diagnostic logs stay outside the
 publication manifest. Close test servers, browser profiles and emulators afterward.
+
+## YouTube references and integration
+
+The Node checks also cover strict source URLs, bounded imports, stable identities,
+mixed collections, atomic rejected batches, portable rewinds, untrusted clocks and
+media-adapter transitions. Go checks verify that the provider origin has no library
+or file capabilities and preserves the required referrer. Android instrumentation
+checks app-private storage without a document grant and rejects URL-shaped player IDs.
+
+For UI checks on the synthetic Courses folder (or an empty folder named
+YouTubeFixtures), use the same browser/emulator setup and run:
+
+```sh
+node tools/youtube-smoke.mjs
+PACESHELF_TEST_PLATFORM=android node tools/youtube-smoke.mjs
+```
+
+Set PACESHELF_TEST_CDP_PORT for another desktop browser port. Native tests require
+a disposable emulator. Optional real-provider checks contact YouTube's public
+IFrame API example, and are intentionally excluded from deterministic CI:
+
+```sh
+PACESHELF_TEST_ONLINE=1 node tools/youtube-smoke.mjs
+PACESHELF_TEST_PLATFORM=android PACESHELF_TEST_ONLINE=1 node tools/youtube-smoke.mjs
+```
+
+These checks cover preview, explicit loading, labels, completion/undo, append,
+backup shape, invalid input, actual content clocks and saved progress. Android adds
+the bridge-free identity and background release check. They do not establish
+physical battery use or all provider restrictions. Keep generated source IDs,
+recordings and raw outputs out of public issues unless reviewed.
 
 ## Release limits
 

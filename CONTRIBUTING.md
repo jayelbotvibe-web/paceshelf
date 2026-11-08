@@ -50,7 +50,7 @@ bash tools/package-desktop.sh
 ## Checks before a pull request
 
 ```sh
-node --test tools/library-protocol.test.cjs
+node --test tools/library-protocol.test.cjs tools/youtube.test.cjs
 python3 tools/audit-public-source.py
 python3 tools/audit-public-source.test.py
 ```

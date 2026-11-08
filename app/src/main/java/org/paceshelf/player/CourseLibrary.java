@@ -61,6 +61,7 @@ final class CourseLibrary implements Closeable {
         JSONObject result = new JSONObject().put("ready", ready).put("selected", tree != null)
             .put("scanning", scanning).put("error", error).put("folder", folderName)
             .put("removing", removalPaused)
+            .put("deviceLibrary",ready && tree==null)
             .put("sync", syncStatus).put("shared", sharedWritable)
             .put("pending", dirty).put("platform", "android")
             .put("syncError",syncError).put("verifiedAt",verifiedAt).put("historyEntries",progress.length())
@@ -132,9 +133,19 @@ final class CourseLibrary implements Closeable {
         }
     }
 
+    void openDeviceLibrary() throws Exception {
+        synchronized(lock){
+            if(portable!=null)portable.close();
+            if(pendingSync!=null)pendingSync.cancel(false);pendingSync=null;
+            tree=null;libraryRoot=null;metadata=null;courses=new JSONArray();videos=new HashMap<>();progress=new JSONObject();
+            ready=false;removalPaused=false;error="";scanning=false;sharedWritable=false;dirty=false;folderName="On this device";
+            portable=new PortableMetadata(context,null,"online-device");ready=true;
+            context.getSharedPreferences("MainActivity",0).edit().putBoolean("removalPending",false).commit();
+        }
+    }
     void refresh() throws Exception {
         synchronized (lock) {
-            if (tree == null) throw new IOException("Choose your Courses folder first.");
+            if (tree == null) {if(ready&&portable!=null){portable.flush();return;}throw new IOException("Choose your library folder first.");}
             open(tree);
         }
     }

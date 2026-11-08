@@ -1,7 +1,29 @@
 # PaceShelf implementation status
 
-Version 0.1.0 is a local development preview. The full product plan remains the
+Version 0.2.0 is a development preview with local and YouTube references. The full product plan remains the
 roadmap; features listed there are not implied to exist in this build.
+
+## YouTube preview in 0.2.0
+
+- Strict video/playlist URL parsing, import review and additions to new/existing
+  collections, including mixed local/online lessons. User labels and ordering stay local.
+- Key-free playlist discovery through the official IFrame player; up to 500 IDs per
+  import. Only the provider's available list is imported; no claim of a complete
+  authenticated/account library export. Missing/private/restricted items may be omitted.
+- Stable provider IDs, shared resume, independent entry completion, bookmarks and
+  explicit linked-playlist updates that append without resetting existing records.
+- An isolated, fixed-assets desktop origin and a separate bridge-free Android
+  WebView, with bounded/session-scoped player state. Local privileged network
+  restrictions remain intact. Provider identity/referrer is supplied separately.
+- Explicit loading before contacting YouTube, original controls/attribution,
+  supported speed persistence, visible-player consecutive playback, external-link
+  fallback and complete Android provider release on background.
+- Android can create a persistent app-private device-only library without a drive
+  or folder grant. Portable transfer remains an explicit mode or backup operation.
+- Existing local schemas are unchanged; new optional typed fields are rejected by
+  earlier clients. Update every device before using online records.
+
+See [YouTube instructions and limits](YOUTUBE.md) and [privacy](PRIVACY.md).
 
 ## Implemented in the first milestone
 
@@ -28,7 +50,8 @@ roadmap; features listed there are not implied to exist in this build.
 - Five-second foreground checkpoints, batched portable saves, forced pause/removal flush,
   no repeating idle status polling, and no full Android folder scan on every resume.
 - Root-level videos, light gray study controls, backup/conflict dialogs and an Ubuntu
-  launcher with a system folder picker. External web requests remain blocked in Android.
+  launcher with a system folder picker. External web requests remain blocked in
+  Android's privileged local view; the separate provider view handles YouTube.
 - Source allowlist, privacy audit, source archive packaging and explicit release signing.
 
 ## Required before a stable local public release
@@ -53,7 +76,8 @@ roadmap; features listed there are not implied to exist in this build.
 
 ## Later milestones
 
-The isolated YouTube integration proof and supported online release remain Stage 1B.
-No provider pages are enabled in the privileged local player. Notes, attachments,
+The initial isolated YouTube preview implements part of Stage 1B. Wider physical
+WebView/provider and source-error testing remains required. No provider pages are
+enabled in the privileged Android local player. Notes, attachments,
 subtitles/search, advanced playback, other desktop platforms and optional remote
 connections remain subsequent milestones described in the product plan.

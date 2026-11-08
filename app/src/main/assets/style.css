@@ -2566,3 +2566,30 @@ input[type=checkbox] {width:20px;height:20px;accent-color:#4b5563;flex-shrink:0;
 }
 
 .mode-row select {max-width:48%;min-height:44px;padding:8px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);font:inherit;font-size:12px;}
+
+/* YouTube stays visually distinct; native provider controls are never covered. */
+#online-frame{display:none}
+.video-stage.online-stage{min-height:260px;background:#171c23}
+.online-stage>#video,.online-stage>#big-play-btn,.online-stage>#video-loading,.online-stage>#fullscreen-btn{display:none!important}
+.online-stage>#online-frame{display:block;position:absolute;inset:0}
+#online-frame iframe,.youtube-provider-preview iframe{width:100%;height:100%;border:0;display:block;min-width:200px;min-height:200px}
+#online-open{z-index:1;position:relative;max-width:85%;white-space:normal}
+#online-open.hidden{display:none}
+.online-details{padding:14px 0;color:var(--muted);font-size:12px;line-height:1.6;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.online-details p{flex-basis:100%;margin:0}
+.online-details.hidden{display:none}
+.source-links{display:flex;flex-wrap:wrap;gap:8px}
+.youtube-mark{display:inline-flex;align-items:center;justify-content:center;background:#e9edf2;color:#4b5867;font-size:9px;font-weight:600;height:100%;width:100%;min-height:24px}
+.continue-art>.youtube-mark{font-size:24px}
+.youtube-sheet{width:min(680px,calc(100% - 24px));max-width:680px}
+#youtube-form{display:grid;gap:16px}
+#youtube-form textarea,#youtube-form select{font:inherit;color:var(--text);background:#fff;min-height:44px;padding:12px;border:1px solid var(--border);border-radius:10px;width:100%;resize:vertical}
+#youtube-form .backup-note{margin:0}
+.youtube-provider-preview{height:300px;min-width:200px;min-height:240px;background:#171c23;border-radius:12px;overflow:hidden}
+.youtube-preview-list{max-height:220px;overflow:auto;font-size:13px;overflow-wrap:anywhere}
+#youtube-preview-status{font-size:13px;line-height:1.6;margin:0}
+#device-library-btn{margin:16px auto}
+@media(max-width:550px){#add-youtube-btn{font-size:11px;padding:8px;min-height:40px}.topbar-actions{gap:6px}.video-stage.online-stage{min-height:240px}.youtube-sheet{width:100%;max-width:100%}.brand-sub{display:none}}
+@media(max-width:550px){#drive-status #drive-label{display:none}#drive-status{width:40px;min-width:40px;padding:0;justify-content:center}}
+
+.policy-link{color:var(--text);text-decoration:underline;text-underline-offset:3px}.policy-link:focus-visible{outline:2px solid #536b82;outline-offset:3px;border-radius:2px}

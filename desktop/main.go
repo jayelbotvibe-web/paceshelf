@@ -341,10 +341,11 @@ func (s *server) readBattery() batteryStatus {
 // ---------------------------------------------------------------------------
 
 type server struct {
-	root     string
-	ix       *Index
-	progress *ProgressStore
-	metadata *MetadataStore
+	root         string
+	ix           *Index
+	progress     *ProgressStore
+	metadata     *MetadataStore
+	onlineOrigin string
 
 	dataDir   string
 	thumbsDir string
@@ -611,7 +612,7 @@ func (s *server) status() map[string]any {
 	if !s.progress.shared {
 		msg = "Saved on this laptop only. SSD save could not be verified. " + s.progress.syncError
 	}
-	result := map[string]any{"protocol": 3, "version": "0.1.0", "platform": "linux", "root": s.root, "ready": !s.progress.removing, "selected": true, "removing": s.progress.removing, "scanning": false, "error": "", "folder": filepath.Base(s.root), "shared": s.progress.shared, "pending": false, "sync": msg, "speed": s.progress.speed, "syncError": s.progress.syncError, "verifiedAt": s.progress.verifiedAt, "historyEntries": len(s.progress.data), "sharedFolder": s.progress.directory}
+	result := map[string]any{"protocol": 3, "version": "0.2.0", "platform": "linux", "root": s.root, "ready": !s.progress.removing, "selected": true, "removing": s.progress.removing, "scanning": false, "error": "", "folder": filepath.Base(s.root), "shared": s.progress.shared, "pending": false, "sync": msg, "speed": s.progress.speed, "syncError": s.progress.syncError, "verifiedAt": s.progress.verifiedAt, "historyEntries": len(s.progress.data), "sharedFolder": s.progress.directory}
 	if s.metadata != nil {
 		for k, v := range s.metadata.status() {
 			result[k] = v
@@ -625,6 +626,9 @@ func (s *server) handler() http.Handler {
 	assets, _ := fs.Sub(frontend, "static")
 	files := http.FileServer(http.FS(assets))
 	mux := http.NewServeMux()
+	mux.HandleFunc("/api/online", func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, map[string]string{"origin": s.onlineOrigin})
+	})
 	mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) { s.writeJSON(w, s.status()) })
 	mux.HandleFunc("/api/courses", s.handleCourses)
 	mux.HandleFunc("/api/course", s.handleCourse)
@@ -765,6 +769,13 @@ func (s *server) handler() http.Handler {
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
+		if s.onlineOrigin != "" {
+			w.Header().Set("Content-Security-Policy", w.Header().Get("Content-Security-Policy")+"; frame-src "+s.onlineOrigin)
+		}
+		if r.URL.Path == "/provider.html" || r.URL.Path == "/provider.js" || r.URL.Path == "/provider.css" {
+			http.NotFound(w, r)
+			return
+		}
 		mux.ServeHTTP(w, r)
 	})
 }
@@ -845,6 +856,10 @@ func main() {
 		log.Fatal(err)
 	}
 	s := &server{root: *root, ix: ix, progress: ps, metadata: metadata, dataDir: *dataDir, thumbsDir: thumbs, thumbSem: make(chan struct{}, 2), thumbLk: map[string]*sync.Mutex{}}
+	if online, e := startOnline("http://" + *addr); e == nil {
+		s.onlineOrigin = online.origin
+		defer online.close()
+	}
 	httpServer := &http.Server{Addr: *addr, ReadHeaderTimeout: 5 * time.Second}
 	s.stop = func() { httpServer.Close() }
 	s.unmount = unmountUSB
@@ -853,7 +868,7 @@ func main() {
 	signal.Notify(interrupts, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(interrupts)
 	go func() { <-interrupts; metadata.flush(); httpServer.Close() }()
-	log.Printf("PaceShelf 0.1.0: %d collections; http://%s", len(ix.courses), *addr)
+	log.Printf("PaceShelf 0.2.0: %d collections; http://%s", len(ix.courses), *addr)
 	if err = httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}

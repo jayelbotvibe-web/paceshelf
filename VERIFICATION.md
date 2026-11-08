@@ -1,4 +1,33 @@
-# PaceShelf 0.1.0 preview verification
+# PaceShelf preview verification
+
+## 0.2.0 YouTube preview
+
+Verified on 2026-11-08 using disposable data. This is preview evidence, not a
+claim of physical phone/tablet, USB durability or battery validation.
+
+| Check | Result |
+| --- | --- |
+| Android debug app/test build and lint | Pass; version 0.2.0, code 2 |
+| Native persistence, provider codec and isolated-player configuration | 24 emulator checks pass |
+| Existing local playback regression | 20 desktop and 19 Android UI checks pass |
+| Metadata and YouTube parsing/adapter regression | 30 Node tests pass |
+| Desktop durability and provider-origin isolation | 22 Go tests pass with race detection; vet passes |
+| YouTube imports, labels, completion, append and invalid-input UI | 15 desktop and 14 Android checks pass, including opt-in real-provider playback |
+| Provider playlist discovery | A public nine-video playlist returns nine references through the official IFrame API |
+| Desktop → Android → Ubuntu YouTube handoff | Actual player clocks preserve a roughly 32-second position, then a deliberate rewind to 9 seconds, through metadata export/restore |
+| Consecutive YouTube playback | A real video end completes the correct lesson and starts the next without another tap |
+| Android provider isolation/lifecycle | No Android JavaScript interface; registered app origin; saved progress and provider view destroyed on background |
+| Preview upgrade identity | Debug signing certificate matches 0.1.0; private-path scan passes |
+| Public source and image boundary | Allowlist audit and 5 media-boundary tests pass |
+
+The handoff test found and fixed an unacknowledged-seek timing issue: a quick
+provider rewind immediately before leaving could otherwise retain the earlier
+app-requested position. A targeted regression test and the real round trip pass.
+No cloud sync, private-playlist authorization, video download or arbitrary web
+embedding is enabled. Provider availability and autoplay can vary. ARM64 binaries
+are cross-compiled; physical devices and their USB/battery behavior remain release gates.
+
+## 0.1.0 baseline
 
 Verified on 2026-11-06 using synthetic fixtures and disposable application data.
 This is development-preview evidence, not approval of a stable public release.
@@ -31,7 +60,7 @@ anonymous writer identity and retains the previous library locally.
 
 The original preview source archive contains reviewed source/documentation,
 upstream notices, the Gradle wrapper and Inter fonts. The current repository also
-includes three separately reviewed synthetic documentation images. It excludes
+includes separately reviewed synthetic documentation images. It excludes
 sample course clips, private libraries, playback records, unreviewed screenshots,
 raw logs, signing material, local configuration, Git history and build outputs.
 Runtime tests and raw diagnostics are not publication candidates. GitHub account

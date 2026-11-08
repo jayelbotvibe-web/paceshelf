@@ -16,6 +16,7 @@ public final class MainActivity extends Activity {
     private static final int PICK_FOLDER=100, IMPORT_PROGRESS=101, EXPORT_PROGRESS=102;
     private final ExecutorService background=Executors.newSingleThreadExecutor();
     private WebView web;
+    private OnlinePlayer online;
     private FrameLayout container;
     private CourseLibrary library;
     private LocalServer server;
@@ -41,6 +42,7 @@ public final class MainActivity extends Activity {
         try { server=new LocalServer(getApplicationContext(),library); }
         catch(Exception failure) { showFatal("Could not start PaceShelf. Close and reopen the app."); return; }
         web=new WebView(this); web.setBackgroundColor(Color.rgb(246,247,249));
+        online=new OnlinePlayer(this,container,payload->{if(!destroyed)web.evaluateJavascript("window.paceShelfOnlineUpdate && window.paceShelfOnlineUpdate(JSON.parse("+JSONObject.quote(payload)+"))",null);});
         WebView.setWebContentsDebuggingEnabled((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0);
         WebSettings settings=web.getSettings();
         settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
@@ -71,7 +73,10 @@ public final class MainActivity extends Activity {
         });
         container.addView(web,new FrameLayout.LayoutParams(-1,-1));
         String saved=getPreferences(0).getString("tree",null);
-        if(saved==null)web.loadUrl(server.url());
+        if(saved==null && getPreferences(0).getBoolean("deviceLibrary",false)){
+            background.execute(()->{try{library.openDeviceLibrary();}catch(Exception ignored){}runOnUiThread(()->{if(!destroyed)web.loadUrl(server.url());});});
+        }
+        else if(saved==null)web.loadUrl(server.url());
         else if(getPreferences(0).getBoolean("removalPending",false)) {
             library.holdForRemoval(Uri.parse(saved));
             web.loadUrl(server.url());
@@ -101,6 +106,7 @@ public final class MainActivity extends Activity {
         if(result!=RESULT_OK || data==null || data.getData()==null) { notifyWeb("Selection cancelled."); return; }
         Uri uri=data.getData();
         if(request==PICK_FOLDER) {
+            getPreferences(0).edit().putBoolean("deviceLibrary",false).commit();
             try {
                 if((data.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION)!=0)
                     getContentResolver().takePersistableUriPermission(uri,
@@ -138,6 +144,22 @@ public final class MainActivity extends Activity {
     }
 
     public final class Bridge {
+        @JavascriptInterface public String openOnline(String request){
+            try{JSONObject config=OnlinePlayer.validateConfig(request);runOnUiThread(()->{if(!destroyed)online.open(config);});return "{\"ok\":true}";}
+            catch(Exception e){return "{\"error\":\"Invalid YouTube player request.\"}";}
+        }
+        @JavascriptInterface public void commandOnline(String request){runOnUiThread(()->{if(!destroyed)online.command(request);});}
+        @JavascriptInterface public void closeOnline(String session){runOnUiThread(()->{if(!destroyed)online.close(session);});}
+        @JavascriptInterface public void openDeviceLibrary(){background.execute(()->{
+            try{library.openDeviceLibrary();getPreferences(0).edit().remove("tree").putBoolean("deviceLibrary",true).commit();runOnUiThread(()->{if(!destroyed)web.evaluateJavascript("window.coursePlayerRefresh()",null);});}
+            catch(Exception e){runOnUiThread(()->toast("Could not open a device library."));}
+        });}
+        @JavascriptInterface public void openYouTubeLink(String kind,String id){runOnUiThread(()->{
+            String url=kind.equals("video")&&id.matches("[A-Za-z0-9_-]{11}")?"https://www.youtube.com/watch?v="+id:
+                kind.equals("playlist")&&id.matches("[A-Za-z0-9_-]{10,100}")?"https://www.youtube.com/playlist?list="+id:
+                kind.equals("terms")?"https://www.youtube.com/t/terms":kind.equals("privacy")?"https://policies.google.com/privacy":kind.equals("paceshelf")?"https://github.com/jayelbotvibe-web/paceshelf/blob/main/docs/PRIVACY.md":null;
+            if(url!=null)try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));}catch(Exception e){toast("No app is available to open this link.");}
+        });}
         @JavascriptInterface public void chooseFolder() { runOnUiThread(()->pickFolder()); }
         @JavascriptInterface public void importProgress() { runOnUiThread(()-> {
             Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*");
@@ -221,6 +243,7 @@ public final class MainActivity extends Activity {
     private void toast(String message) { if(!destroyed)Toast.makeText(this,message,Toast.LENGTH_LONG).show(); }
     private void showFatal(String message) { new AlertDialog.Builder(this).setMessage(message).setPositiveButton("Close",(d,w)->finish()).show(); }
     @Override public void onBackPressed() {
+        if(online!=null&&online.isOpen()){online.back();return;}
         if(fullScreen!=null) { exitFullScreen(); return; }
         if(web==null) { super.onBackPressed(); return; }
         web.evaluateJavascript("window.coursePlayerBack ? window.coursePlayerBack() : false",result-> {
@@ -231,7 +254,7 @@ public final class MainActivity extends Activity {
         paused=true; pauseSaveFinished=false;
         final int generation=++pauseGeneration;
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        if(web!=null)web.evaluateJavascript("window.coursePlayerSuspend ? window.coursePlayerSuspend() : window.coursePlayerPause && window.coursePlayerPause()",ignored-> {
+        Runnable save=()->{if(online!=null)online.destroy(true);if(web!=null)web.evaluateJavascript("window.coursePlayerSuspend ? window.coursePlayerSuspend() : window.coursePlayerPause && window.coursePlayerPause()",ignored-> {
             if(!destroyed)background.execute(()-> {
                 library.flush();
                 runOnUiThread(()-> {
@@ -241,7 +264,8 @@ public final class MainActivity extends Activity {
                     }
                 });
             });
-        });
+        });};
+        if(online!=null)online.pause(save);else save.run();
         super.onPause();
     }
     @Override protected void onStop() {
@@ -256,11 +280,12 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume(); stopped=false; ++pauseGeneration;
         if(web!=null) { web.resumeTimers(); web.onResume(); }
+        if(online!=null)online.resume();
         if(paused && server!=null) {
             paused=false;
             if(library.isRemovalPaused())return;
             String selected=getPreferences(0).getString("tree",null);
-            if(selected!=null)background.execute(()-> {
+            if(selected!=null || getPreferences(0).getBoolean("deviceLibrary",false))background.execute(()-> {
                 runOnUiThread(()-> {
                     if(!destroyed)web.evaluateJavascript("window.coursePlayerRefresh && window.coursePlayerRefresh()",null);
                 });
@@ -269,6 +294,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onDestroy() {
         destroyed=true;
+        if(online!=null)online.destroy(false);
         if(web!=null) { web.removeJavascriptInterface("Android"); web.destroy(); }
         if(server!=null)try { server.close(); } catch(Exception ignored) { }
         background.execute(()->library.close()); background.shutdown();
