@@ -17,6 +17,7 @@ async function preview(text,title){
 }
 try{
  await c.until('!!window.PaceShelfYouTube&&!document.querySelector("#add-youtube-btn").disabled');
+ await c.evaluate(`(()=>{const original=PaceShelfOnline.Media.prototype.update;PaceShelfOnline.Media.prototype.update=function(value){window.paceShelfTestMedia=this;return original.call(this,value);};})()`);
  const safe=await c.evaluate('(async()=>{const s=await(await fetch("./api/status")).json(),list=await(await fetch("./api/courses")).json();return s.folder==="YouTubeFixtures" || list.length===2&&list.every(c=>c.id.startsWith("TEST"))})()');
  check(safe,'isolated fixture library guard');
  await click('#home-btn');await preview('https://youtu.be/'+A,sample);
@@ -66,6 +67,23 @@ try{
    await c.call('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...point});
   }
   await c.until('document.querySelector("#elapsed-time").textContent!=="0:00"',20000);await sleep(1800);
+  await c.evaluate('window.coursePlayerPause()');await sleep(800);
+  const seekTarget=await c.evaluate('Math.min(45,paceShelfTestMedia.duration/2)');
+  await c.evaluate(`paceShelfTestMedia.currentTime=${seekTarget}`);
+  await c.until(`Math.abs(paceShelfTestMedia._observedPosition-${seekTarget})<2&&Math.abs(paceShelfTestMedia.currentTime-${seekTarget})<2`,8000);
+  check(true,'paused seek reaches the real provider clock without another playback action');
+  await click('#bookmark-btn');await c.until('document.querySelector("[data-jump]")');
+  check(await c.evaluate(`(()=>{
+   const m=paceShelfTestMedia,s={ready:true,videoId:m.video.videoId,position:m.currentTime,duration:m.duration,state:2,speed:m.playbackRate,rates:[...m.rates]};
+   document.querySelector('.bookmark-panel').open=true;
+   const button=document.querySelector('[data-jump]');button.focus();m.update(s);m.update(s);m.update(s);
+   return document.querySelector('[data-jump]')===button&&document.activeElement===button;
+  })()`),'unchanged player clocks retain bookmark controls and keyboard focus');
+  check(await c.evaluate(`(()=>{
+   const m=paceShelfTestMedia,s={ready:true,videoId:m.video.videoId,position:m.currentTime,duration:m.duration,state:2,speed:m.playbackRate,rates:[...m.rates]};
+   m.update({...s,videoId:'BBBBBBBBBBB'});const blocked=document.querySelector('#seek-slider').disabled;
+   m.update(s);return blocked&&!m.foreign&&!document.querySelector('#seek-slider').disabled&&m.currentTime===s.position;
+  })()`),'returning from a related-video snapshot restores seek controls and the selected clock');
   if(android){adb('shell','input','keyevent','3');await sleep(1200);}
   else await c.evaluate('window.coursePlayerPause();document.querySelector("#back-btn").click()');
   state=await library();

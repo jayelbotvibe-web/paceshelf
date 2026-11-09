@@ -1,5 +1,14 @@
 # Changes
 
+## 0.2.1 — YouTube playback fixes
+
+Paused seeks now wait for the provider's actual clock and briefly continue sampling
+until it settles, so a stale paused snapshot cannot restore the old position.
+Returning from a related YouTube video re-enables the selected lesson's seek
+controls without replaying its initial resume. Unchanged clock updates preserve
+bookmark controls and keyboard focus instead of rebuilding them every second.
+Temporary missing provider clocks retain only one retry timer.
+
 ## 0.2.0 — YouTube reference preview
 
 Add public/unlisted YouTube playlists or pasted video links to new or existing

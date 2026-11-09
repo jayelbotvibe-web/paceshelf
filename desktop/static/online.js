@@ -86,16 +86,25 @@
       if(value.closed){this.release(false);this.emit('pause');return;}
       if(value.error){this.errorMessage=value.error;this._state=2;this.emit('error');return;}
       if(!value.ready)return;
-      if(value.videoId!==this.video.videoId){if(this._switching)return;this.foreign=true;this._duration=NaN;this.emit('foreign');return;}
+      if(value.videoId!==this.video.videoId){
+        if(this._switching)return;
+        const changed=!this.foreign;this.foreign=true;this._duration=NaN;
+        if(changed)this.emit('sourcechange');
+        return;
+      }
       this._switching=false;
+      const sourceChanged=this.foreign;
+      const rateChanged=this._speed!==value.speed||this.rates.length!==value.rates.length||this.rates.some((rate,index)=>rate!==value.rates[index]);
       this.foreign=false;const before=this._state;
       this._state=value.state;this._duration=value.duration;this._speed=value.speed;this.rates=value.rates;
       this._observedPosition=value.position;
       if(this._seek!==undefined){
-        if(Math.abs(value.position-this._seek)<2||value.state===2||Date.now()>=this._seekUntil){this._seek=undefined;this._position=value.position;this.emit('seeked');}
+        if(Math.abs(value.position-this._seek)<2||Date.now()>=this._seekUntil){this._seek=undefined;this._position=value.position;this.emit('seeked');}
       }else this._position=value.position;
       if(!this._loaded&&value.duration>0){this._loaded=true;this.emit('loadedmetadata');this.emit('canplay');}
-      this.emit('timeupdate');this.emit('ratechange');
+      if(sourceChanged)this.emit('sourcechange');
+      this.emit('timeupdate');
+      if(rateChanged)this.emit('ratechange');
       if(value.state===1)this._wasPlaying=true;
       if(value.state===1&&before!==1){this.emit('play');this.emit('playing');}
       else if(value.state===2&&before!==2)this.emit('pause');

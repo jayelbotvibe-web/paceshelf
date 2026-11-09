@@ -91,5 +91,56 @@ test('a quick provider rewind before closing supersedes an unacknowledged app se
   const m=new context.window.PaceShelfOnline.Media(new LocalVideo());m.useYouTube({videoId:A},31);m.update(sample(A,31));
   m.currentTime=31;m.update(sample(A,9,1));assert.equal(m.currentTime,31);
   m.update({closed:true});assert.equal(m.currentTime,9);
-  m.currentTime=31;m.update(sample(A,8,2));assert.equal(m.currentTime,8);
+  m.currentTime=31;m.update(sample(A,8,2));m.update({closed:true});assert.equal(m.currentTime,8);
+});
+test('a stale paused snapshot does not cancel a seek before the provider confirms it',()=>{
+  const m=new context.window.PaceShelfOnline.Media(new LocalVideo());m.useYouTube({videoId:A},20);m.update(sample(A,20,2));
+  let confirmed=0;m.addEventListener('seeked',()=>confirmed++);
+  m.currentTime=60;m.update(sample(A,20,2));assert.equal(m.currentTime,60);assert.equal(confirmed,0);
+  m.update(sample(A,60,2));assert.equal(m.currentTime,60);assert.equal(confirmed,1);
+});
+test('returning from a related video restores tracking controls without replaying the initial resume',()=>{
+  const m=new context.window.PaceShelfOnline.Media(new LocalVideo());m.useYouTube({videoId:A},20);
+  const transitions=[];let metadata=0;
+  m.addEventListener('sourcechange',()=>transitions.push({foreign:m.foreign,duration:m.duration,position:m.currentTime}));
+  m.addEventListener('loadedmetadata',()=>metadata++);
+  m.update(sample(A,20,1));m.update(sample(B,90,1));m.update(sample(B,91,1));
+  assert.equal(m.currentTime,20);assert(m.foreign);assert(Number.isNaN(m.duration));
+  m.update(sample(A,25,2));
+  assert.equal(transitions.length,2);assert.equal(transitions[0].foreign,true);
+  assert.deepEqual(transitions[1],{foreign:false,duration:120,position:25});
+  assert.equal(metadata,1);assert.equal(m.foreign,false);
+});
+test('ordinary clock updates preserve study controls by emitting ratechange only when rates change',()=>{
+  const m=new context.window.PaceShelfOnline.Media(new LocalVideo());m.useYouTube({videoId:A},0);
+  let rates=0,times=0;m.addEventListener('ratechange',()=>rates++);m.addEventListener('timeupdate',()=>times++);
+  m.update(sample(A,1,1));m.update(sample(A,2,1));m.update(sample(A,3,1));
+  assert.equal(rates,1);assert.equal(times,3);
+  m.update({...sample(A,4,1),speed:1.5});assert.equal(rates,2);
+  m.update({...sample(A,5,1),speed:1.5,rates:[1,1.5]});assert.equal(rates,3);
+  m.update({...sample(A,6,1),speed:1.5,rates:[1,1.5]});assert.equal(rates,3);
+});
+test('the provider samples an asynchronous paused seek until it settles, then stops polling',()=>{
+  let now=1000,nextTimer=0,position=20,events,videoURL='https://youtu.be/'+A;const timers=new Map(),messages=[];
+  const parent={postMessage(value){messages.push({...value});}};
+  const player={getVideoUrl:()=>videoURL,getPlaylist:()=>[],getPlayerState:()=>2,
+    getCurrentTime:()=>position,getDuration:()=>120,getPlaybackRate:()=>1,getAvailablePlaybackRates:()=>[1],
+    cueVideoById(){},seekTo(value){assert.equal(value,60);}};
+  const w={PaceShelfYouTube:refs,parent,addEventListener(){}};
+  const providerContext={window:w,URLSearchParams,location:{origin:'http://127.0.0.1:9000',search:'?parent=http://127.0.0.1:8000'},Date:{now:()=>now},
+    setTimeout(fn,ms){const id=++nextTimer;timers.set(id,{fn,at:now+ms});return id;},clearTimeout(id){timers.delete(id);},
+    document:{querySelector:()=>({replaceWith(){},textContent:''}),createElement:()=>({}),head:{append(){}},addEventListener(){}},
+    YT:{Player:class {constructor(frame,options){events=options.events;return player;}}}};
+  vm.runInNewContext(fs.readFileSync(require.resolve('../desktop/static/provider.js'),'utf8'),providerContext);
+  const provider=w.PaceShelfProvider,session='synthetic-session-0123456789';
+  provider.start({session,mode:'play',videoId:A,start:20});w.onYouTubeIframeAPIReady();events.onReady();
+  assert.equal(timers.size,0);
+  provider.command({session,action:'seek',value:60});assert.equal(messages.at(-1).position,20);assert.equal(timers.size,1);
+  position=60;
+  for(let i=0;i<3;i++){
+    const [id,timer]=[...timers][0];timers.delete(id);now=timer.at;timer.fn();
+  }
+  assert.equal(messages.at(-1).position,60);assert.equal(timers.size,0);
+  // Native snapshots during a temporary missing clock must not multiply retries.
+  videoURL='';provider.snapshot();provider.snapshot();provider.snapshot();assert.equal(timers.size,1);
 });

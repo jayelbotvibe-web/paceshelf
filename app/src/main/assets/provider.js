@@ -2,7 +2,7 @@
 (()=>{
   'use strict';
   const refs=window.PaceShelfYouTube;
-  let config=null,player=null,timer=null,deadline=null,dead=false,ready=false,started=0;
+  let config=null,player=null,timer=null,deadline=null,dead=false,ready=false,started=0,settleUntil=0;
   let latest={kind:'state',ready:false,error:''};
   const parentOrigin=new URLSearchParams(location.search).get('parent');
   const status=text=>{document.querySelector('#provider-status').textContent=text;};
@@ -13,6 +13,7 @@
   }
   function sample(){
     if(!player || !ready || dead)return latest;
+    clearTimeout(timer);timer=null;
     try{
       const video=refs.parse(player.getVideoUrl()).videoId;
       const ids=(player.getPlaylist()||[]).filter(refs.videoId).slice(0,500);
@@ -21,9 +22,8 @@
         speed:player.getPlaybackRate(),rates:player.getAvailablePlaybackRates(),playlistIds:ids});
       if(ids.length && config.mode==='inspect')status(ids.length+' videos found. Review the import in PaceShelf.');
       else if(!latest.error)status(state===1?'':'Use YouTube’s play button to begin.');
-      clearTimeout(timer);
-      // Only playing/buffering or initial playlist discovery need a repeating sample.
-      if(state===1 || state===3 || config.mode==='inspect'&&!ids.length&&Date.now()-started<25000)timer=setTimeout(sample,1000);
+      // A paused seek is asynchronous too: briefly sample until its clock settles.
+      if(state===1 || state===3 || Date.now()<settleUntil || config.mode==='inspect'&&!ids.length&&Date.now()-started<25000)timer=setTimeout(sample,1000);
     }catch(_){
       if(Date.now()-started<25000)timer=setTimeout(sample,500);
     }
@@ -52,7 +52,7 @@
         else player.cueVideoById({videoId:config.videoId,startSeconds:config.start||0});
         sample();
       },
-      onStateChange:()=>{sample();},onPlaybackRateChange:()=>sample(),onError:e=>fail(e.data),
+      onStateChange:()=>{settleUntil=Date.now()+3000;sample();},onPlaybackRateChange:()=>sample(),onError:e=>fail(e.data),
       onAutoplayBlocked:()=>{status('Press play in the YouTube player to continue.');publish({state:2});}
     }});
   }
@@ -73,7 +73,10 @@
     if(value.action==='load'&&value.value&&refs.videoId(value.value.videoId)&&Number.isFinite(value.value.start)&&value.value.start>=0&&value.value.start<=1e8){config.videoId=value.value.videoId;latest.error='';latest.errorCode=0;status('Loading the next video…');player.loadVideoById({videoId:config.videoId,startSeconds:value.value.start});}
     else if(value.action==='play')player.playVideo();
     else if(value.action==='pause')player.pauseVideo();
-    else if(value.action==='seek'&&Number.isFinite(value.value))player.seekTo(Math.max(0,Math.min(value.value,player.getDuration()||0)),true);
+    else if(value.action==='seek'&&Number.isFinite(value.value)){
+      settleUntil=Date.now()+3000;
+      player.seekTo(Math.max(0,Math.min(value.value,player.getDuration()||0)),true);
+    }
     else if(value.action==='speed'&&player.getAvailablePlaybackRates().includes(value.value))player.setPlaybackRate(value.value);
     else if(value.action==='volume'&&Number.isFinite(value.value))player.setVolume(Math.min(100,Math.max(0,value.value)));
     else if(value.action==='mute')value.value?player.mute():player.unMute();

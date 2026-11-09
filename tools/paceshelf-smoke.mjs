@@ -11,7 +11,12 @@ try{
  await c.evaluate('document.querySelector("#home-btn").click();document.querySelector("#clear-filters").click()');
  check(await c.evaluate('document.title==="PaceShelf"'),'PaceShelf branding');
  check(await c.evaluate('document.documentElement.scrollWidth<=innerWidth'),'library fits viewport');
- await c.evaluate('document.querySelector(".course-card").click()');
+ await c.evaluate(`(async()=>{
+  const state=PaceShelfLibrary.merge(...(await(await fetch('./api/library')).json()).states);
+  const key=Object.entries(state.records).find(([key,versions])=>key.startsWith('collection/')&&versions.length===1&&versions[0].value?.source.startsWith('TEST101'))?.[0];
+  if(!key)throw Error('The 60-second synthetic MP4 collection is required');
+  document.querySelector('[data-course="'+key.slice('collection/'.length)+'"]').click();
+ })()`);
  await c.until('document.querySelector("#video").readyState>=2');
  check(await c.evaluate('document.querySelector("#video").videoWidth>0'),'local video decodes');
  await c.evaluate('document.querySelectorAll(".watch-item")[0].click()');

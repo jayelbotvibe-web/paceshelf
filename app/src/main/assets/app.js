@@ -515,7 +515,11 @@
     loadingVideo = false; $("#video-loading").classList.add("hidden"); updatePlaybackState();
     notice(el.video.online?el.video.errorMessage || "YouTube could not play this video. Check your connection or use Open original video.":"This lesson couldn’t be played. Check the SSD connection, or try another lesson.");
   });
-  el.video.addEventListener('foreign',()=>{el.seek.disabled=true;updateTimeline();updateStudy();notice('YouTube opened a different video. Progress tracking for this lesson is paused.');});
+  el.video.addEventListener('sourcechange',()=>{
+    el.seek.disabled=el.video.foreign||!Number.isFinite(el.video.duration);
+    updateTimeline();updateStudy();
+    notice(el.video.foreign?'YouTube opened a different video. Progress tracking for this lesson is paused.':'Back to this lesson. Progress tracking resumed.');
+  });
   el.video.addEventListener('ratechange',()=>{
     if(!el.video.online || !Number.isFinite(el.video.duration) || el.video.duration<=0)return;
     const rate=el.video.playbackRate;

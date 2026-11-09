@@ -612,7 +612,7 @@ func (s *server) status() map[string]any {
 	if !s.progress.shared {
 		msg = "Saved on this laptop only. SSD save could not be verified. " + s.progress.syncError
 	}
-	result := map[string]any{"protocol": 3, "version": "0.2.0", "platform": "linux", "root": s.root, "ready": !s.progress.removing, "selected": true, "removing": s.progress.removing, "scanning": false, "error": "", "folder": filepath.Base(s.root), "shared": s.progress.shared, "pending": false, "sync": msg, "speed": s.progress.speed, "syncError": s.progress.syncError, "verifiedAt": s.progress.verifiedAt, "historyEntries": len(s.progress.data), "sharedFolder": s.progress.directory}
+	result := map[string]any{"protocol": 3, "version": "0.2.1", "platform": "linux", "root": s.root, "ready": !s.progress.removing, "selected": true, "removing": s.progress.removing, "scanning": false, "error": "", "folder": filepath.Base(s.root), "shared": s.progress.shared, "pending": false, "sync": msg, "speed": s.progress.speed, "syncError": s.progress.syncError, "verifiedAt": s.progress.verifiedAt, "historyEntries": len(s.progress.data), "sharedFolder": s.progress.directory}
 	if s.metadata != nil {
 		for k, v := range s.metadata.status() {
 			result[k] = v
@@ -868,7 +868,7 @@ func main() {
 	signal.Notify(interrupts, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(interrupts)
 	go func() { <-interrupts; metadata.flush(); httpServer.Close() }()
-	log.Printf("PaceShelf 0.2.0: %d collections; http://%s", len(ix.courses), *addr)
+	log.Printf("PaceShelf 0.2.1: %d collections; http://%s", len(ix.courses), *addr)
 	if err = httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}

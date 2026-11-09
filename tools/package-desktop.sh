@@ -3,7 +3,7 @@ set -euo pipefail
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$project_dir"
 python3 tools/audit-public-source.py
-package_dir="$project_dir/dist/PaceShelf-Ubuntu-0.2.0-preview"
+package_dir="$project_dir/dist/PaceShelf-Ubuntu-0.2.1-preview"
 mkdir -p -- "$package_dir"
 (cd desktop && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o "$package_dir/paceshelf" .)
 (cd desktop && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags='-s -w' -o "$package_dir/paceshelf-arm64" .)
@@ -16,8 +16,8 @@ mkdir -p "$package_dir/licenses"
 cp licenses/Go-BSD-3-Clause.txt "$package_dir/licenses/"
 cp desktop/static/fonts/OFL.txt "$package_dir/licenses/Inter-OFL.txt"
 chmod 755 "$package_dir/start.sh" "$package_dir/install.sh" "$package_dir/paceshelf" "$package_dir/paceshelf-arm64"
-tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner -czf dist/PaceShelf-Ubuntu-0.2.0-preview.tar.gz -C dist PaceShelf-Ubuntu-0.2.0-preview
-(cd dist && sha256sum PaceShelf-Ubuntu-0.2.0-preview.tar.gz > PaceShelf-Ubuntu-0.2.0-preview.tar.gz.sha256)
+tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner -czf dist/PaceShelf-Ubuntu-0.2.1-preview.tar.gz -C dist PaceShelf-Ubuntu-0.2.1-preview
+(cd dist && sha256sum PaceShelf-Ubuntu-0.2.1-preview.tar.gz > PaceShelf-Ubuntu-0.2.1-preview.tar.gz.sha256)
 
 if command -v dpkg-deb >/dev/null;then
  for arch in amd64 arm64;do
@@ -33,7 +33,7 @@ if command -v dpkg-deb >/dev/null;then
   cp desktop/static/fonts/OFL.txt "$deb_dir/usr/share/doc/paceshelf/Inter-OFL.txt"
   cat > "$deb_dir/DEBIAN/control" <<EOF
 Package: paceshelf
-Version: 0.2.0~preview1
+Version: 0.2.1~preview1
 Architecture: $arch
 Maintainer: PaceShelf contributors
 Section: video
@@ -54,7 +54,7 @@ Terminal=false
 Categories=AudioVideo;Education;
 EOF
   chmod 755 "$deb_dir/usr/lib/paceshelf/"*
-  dpkg-deb --root-owner-group --build "$deb_dir" "dist/paceshelf_0.2.0-preview1_$arch.deb"
-  (cd dist && sha256sum "paceshelf_0.2.0-preview1_$arch.deb" > "paceshelf_0.2.0-preview1_$arch.deb.sha256")
+  dpkg-deb --root-owner-group --build "$deb_dir" "dist/paceshelf_0.2.1-preview1_$arch.deb"
+  (cd dist && sha256sum "paceshelf_0.2.1-preview1_$arch.deb" > "paceshelf_0.2.1-preview1_$arch.deb.sha256")
  done
 fi

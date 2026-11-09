@@ -1,5 +1,35 @@
 # PaceShelf preview verification
 
+## 0.2.1 review and playback fixes
+
+Verified on 2026-11-09 using disposable libraries and an Android emulator.
+
+| Check | Result |
+| --- | --- |
+| Android app/test build and lint | Pass; version 0.2.1, code 3 |
+| Native persistence and isolated-player configuration | 24 emulator checks pass |
+| Local playback regression | 20 desktop and 19 Android UI checks pass |
+| Metadata, parsing, adapter and provider timing | 34 Node tests pass |
+| Desktop durability/isolation | 22 Go tests pass with race detection; vet passes |
+| YouTube integration | 18 desktop and 17 Android UI checks pass, including real-provider paused seeking and saved clocks |
+| Progress handoff | Desktop position around 32 seconds resumes on Android; a rewind to 9 seconds returns to Ubuntu through export/restore |
+| Consecutive playback | A real video end completes its lesson and starts the next video |
+| Packaging | Nine shared frontend files match the APK assets; preview signing certificate matches 0.2.0 |
+| Publication boundary | Source allowlist and five media-boundary checks pass |
+
+The review reproduced and fixed stale paused-seek checkpoints, disabled seek
+controls after returning from a related video, repeated bookmark DOM replacement,
+and overlapping retry timers when a provider clock is temporarily unavailable.
+New unit regressions cover each behavior. Integration checks use a real paused
+seek and controlled related-video/unchanged-clock snapshots for the UI transitions.
+The local smoke test now selects its long MP4 fixture by source identity rather
+than assuming UUID-based collection order; the short WebM cannot satisfy its
+19-second checkpoint assertion.
+
+Physical phone/tablet USB handoff, screen-off battery consumption, all codecs,
+all YouTube restrictions and hardware filesystem durability remain unverified.
+The export/restore check does not establish physical SSD handoff reliability.
+
 ## 0.2.0 YouTube preview
 
 Verified on 2026-11-08 using disposable data. This is preview evidence, not a

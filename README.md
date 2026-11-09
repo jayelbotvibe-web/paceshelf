@@ -7,15 +7,15 @@ adjust playback speed, save bookmarks and track what you have finished — on An
 or Ubuntu, with no account or hosted service required. Add YouTube video links or
 public/unlisted playlists alongside your personal files; YouTube playback needs internet.
 
-**[Download for Android](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.0-preview/PaceShelf-0.2.0-preview-debug.apk)**
+**[Download for Android](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.1-preview/PaceShelf-0.2.1-preview-debug.apk)**
 &nbsp; · &nbsp;
-**[Download for Ubuntu](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.0-preview/paceshelf_0.2.0-preview1_amd64.deb)**
+**[Download for Ubuntu](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.1-preview/paceshelf_0.2.1-preview1_amd64.deb)**
 &nbsp; · &nbsp;
 [Installation guide](docs/INSTALL.md)
 &nbsp; · &nbsp;
-[All downloads](https://github.com/jayelbotvibe-web/paceshelf/releases/tag/v0.2.0-preview)
+[All downloads](https://github.com/jayelbotvibe-web/paceshelf/releases/tag/v0.2.1-preview)
 
-> **Development preview · 0.2.0.** Update every device before using YouTube metadata. Suitable for trying the project with backed-up
+> **Development preview · 0.2.1.** Update every device before using YouTube metadata. Suitable for trying the project with backed-up
 > videos and metadata. Physical USB handoff, battery use and broader codec support
 > still need validation. The Android APK is debug-signed; export a metadata backup
 > before a future signing change. [Known limitations](#compatibility-and-preview-limits).

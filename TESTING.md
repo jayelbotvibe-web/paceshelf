@@ -94,6 +94,11 @@ the bridge-free identity and background release check. They do not establish
 physical battery use or all provider restrictions. Keep generated source IDs,
 recordings and raw outputs out of public issues unless reviewed.
 
+The real-provider flow also checks a paused seek without another playback action.
+Controlled related-video snapshots exercise returning to the selected lesson, and
+unchanged snapshots verify bookmark node identity and keyboard focus. Unit checks
+cover asynchronous seek confirmation and bounded retry timers during missing clocks.
+
 ## Release limits
 
 Physical phone/tablet battery, screen-off USB power, drive handoff and interrupted

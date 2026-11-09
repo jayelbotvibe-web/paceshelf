@@ -5,6 +5,9 @@ The videos stream from YouTube through its official embedded player. PaceShelf
 does not download videos, modify playlists in your YouTube account or operate a
 hosted proxy. No API key or PaceShelf account is needed.
 
+Use 0.2.1 or newer for corrected paused-seek checkpoints, restored controls after
+returning from a related video, and stable bookmark controls during clock updates.
+
 ## Add a video list
 
 1. Open a library and select **Add YouTube**.

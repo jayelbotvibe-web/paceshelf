@@ -1,6 +1,6 @@
 # PaceShelf implementation status
 
-Version 0.2.0 is a development preview with local and YouTube references. The full product plan remains the
+Version 0.2.1 is a development preview with local and YouTube references. The full product plan remains the
 roadmap; features listed there are not implied to exist in this build.
 
 ## YouTube preview in 0.2.0
