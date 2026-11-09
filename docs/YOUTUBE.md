@@ -1,6 +1,6 @@
 # YouTube collections
 
-PaceShelf 0.2.0 adds **references** to public/unlisted YouTube videos and playlists.
+PaceShelf supports **references** to public/unlisted YouTube videos and playlists.
 The videos stream from YouTube through its official embedded player. PaceShelf
 does not download videos, modify playlists in your YouTube account or operate a
 hosted proxy. No API key or PaceShelf account is needed.
@@ -79,9 +79,10 @@ the receiving device in device mode. Selecting a filesystem folder opens that
 folder's own library; it does not silently combine it with the app-private library.
 On Ubuntu, choose an existing video folder or an empty folder with the launcher.
 
-**Update all devices to 0.2.0 or newer before using online records.** The storage
-envelope remains compatible, but earlier frontends reject the new typed fields
-and stop editing rather than silently discarding them. Keep a metadata backup.
+**Use 0.2.1 on all devices for the current playback fixes.** YouTube records require
+0.2.0 or newer; earlier frontends reject the new typed fields and stop editing
+rather than silently discarding them. Version 0.2.1 keeps the 0.2.0 storage format.
+Keep a metadata backup. See [upgrade instructions](INSTALL.md#updating-an-existing-preview).
 
 ## If a video will not play
 

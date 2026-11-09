@@ -1,9 +1,19 @@
 # PaceShelf implementation status
 
-Version 0.2.1 is a development preview with local and YouTube references. The full product plan remains the
-roadmap; features listed there are not implied to exist in this build.
+Version 0.2.1 is a development preview with local and YouTube references. The full
+product plan remains the roadmap; features listed there are not implied to exist
+in this build. See [review evidence](../VERIFICATION.md#021-review-and-playback-fixes)
+for the current checks and physical-device testing limits.
 
-## YouTube preview in 0.2.0
+## Playback fixes in 0.2.1
+
+- Paused seeks wait for a confirmed provider clock and briefly sample until it settles.
+- Returning from a related video restores the selected lesson's seek controls without
+  replaying its initial resume or using the unrelated video's position.
+- Unchanged clock updates retain bookmark controls and focus. Temporary missing
+  clocks maintain a single retry timer.
+
+## YouTube collections, introduced in 0.2.0
 
 - Strict video/playlist URL parsing, import review and additions to new/existing
   collections, including mixed local/online lessons. User labels and ordering stay local.

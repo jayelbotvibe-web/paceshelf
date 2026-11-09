@@ -23,7 +23,7 @@ on the opening screen instead. Use **Add YouTube**, preview a playlist or paste
 video links, then confirm. Online playback needs internet. See [YouTube instructions](YOUTUBE.md).
 
 For an upgrade, install this APK over the matching preview without clearing data.
-Update every device to 0.2.1 before sharing metadata containing YouTube references.
+Use the current preview on every device; see [updating an existing preview](#updating-an-existing-preview).
 
 This APK is **debug-signed**, not a stable release. A future release with a different
 signer may require uninstalling this preview first. Export a library backup before
@@ -32,6 +32,22 @@ uninstalling or clearing app data; backups exclude the videos themselves.
 If the drive is missing from Android's file manager, check the cable, power and
 filesystem first. An app cannot grant access to storage the operating system has
 not recognized. Folder-picker restrictions also vary by Android version/provider.
+
+## Updating an existing preview
+
+1. Export a metadata backup before updating. Backups contain collections, progress
+   and bookmarks, not the videos themselves.
+2. **Android:** install 0.2.1 over the matching PaceShelf preview. Do not uninstall
+   or clear app data. The 0.2.1 APK uses the same preview signing certificate as 0.2.0.
+3. **Ubuntu:** finish saving and exit the older player before installing the new
+   package or launching the new portable bundle. Run PaceShelf as your normal user.
+4. Open the same library folder and check your storage mode. A device-only YouTube
+   library still needs export/restore to move its history to another installation.
+
+Version 0.2.1 keeps the 0.2.0 metadata format and fixes paused seeking, returning
+from related videos and repeated study-control updates. Use 0.2.1 on all devices
+to receive those fixes. Versions before 0.2.0 cannot edit YouTube records; they
+stop editing rather than silently discard the new fields.
 
 ## Ubuntu: recommended AMD64 package
 

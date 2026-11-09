@@ -2,10 +2,10 @@
 
 **Your learning library. Your pace.**
 
-Turn a folder of your own videos into an organized learning library. Resume lessons,
-adjust playback speed, save bookmarks and track what you have finished — on Android
-or Ubuntu, with no account or hosted service required. Add YouTube video links or
-public/unlisted playlists alongside your personal files; YouTube playback needs internet.
+Organize your own videos and YouTube playlists into a personal learning library.
+Resume lessons, adjust playback speed, save bookmarks and track what you have
+finished on Android or Ubuntu. No PaceShelf account or hosted service is required.
+Personal videos work offline; YouTube playback needs internet.
 
 **[Download for Android](https://github.com/jayelbotvibe-web/paceshelf/releases/download/v0.2.1-preview/PaceShelf-0.2.1-preview-debug.apk)**
 &nbsp; · &nbsp;
@@ -14,11 +14,34 @@ public/unlisted playlists alongside your personal files; YouTube playback needs 
 [Installation guide](docs/INSTALL.md)
 &nbsp; · &nbsp;
 [All downloads](https://github.com/jayelbotvibe-web/paceshelf/releases/tag/v0.2.1-preview)
+&nbsp; · &nbsp;
+[What's new](CHANGES.md)
 
-> **Development preview · 0.2.1.** Update every device before using YouTube metadata. Suitable for trying the project with backed-up
+> **Development preview · 0.2.1.** Use the current preview on every device. Suitable for trying the project with backed-up
 > videos and metadata. Physical USB handoff, battery use and broader codec support
 > still need validation. The Android APK is debug-signed; export a metadata backup
 > before a future signing change. [Known limitations](#compatibility-and-preview-limits).
+
+## New in 0.2.1
+
+YouTube collections support public/unlisted playlist links or a pasted list of
+video links, alongside local videos. The latest preview fixes:
+
+- **Paused seeking:** PaceShelf follows the confirmed video position so a stale
+  player update cannot restore the old checkpoint.
+- **Returning to your lesson:** seeking becomes available again after returning
+  from a related YouTube video.
+- **Steadier study controls:** bookmark buttons retain keyboard focus during
+  ordinary player updates, and missing clocks do not multiply retry timers.
+
+Install over the matching Android preview without clearing data. On Ubuntu, exit
+the older player before installing or launching the update. Your library metadata
+uses the same format as 0.2.0. See [upgrade instructions](docs/INSTALL.md#updating-an-existing-preview).
+
+[Review results](VERIFICATION.md#021-review-and-playback-fixes): local-video checks,
+real YouTube playback and paused seeking pass on Ubuntu and an Android emulator.
+The desktop → Android → desktop progress test uses metadata export/restore;
+physical SSD handoff and battery use remain unverified.
 
 ## See it in action
 
@@ -64,10 +87,14 @@ with the system folder picker; these images do not establish physical-device tes
 ## Get started
 
 1. **Install PaceShelf** using the [Android or Ubuntu guide](docs/INSTALL.md).
-2. **Choose your video folder.** Videos can be on the device or an accessible USB
-   drive. Subfolders become collections; videos directly in the chosen folder work too.
+2. **Choose your source.** For personal videos, select a folder on the device or
+   an accessible USB drive. For YouTube only, Android offers **Start a device-only
+   YouTube library**; on Ubuntu, select an empty folder with the launcher.
 3. **Choose where progress is saved** in **Library settings → Save library metadata**.
-4. **Open a collection and play.** Return to Continue learning when you come back.
+   Use **On this device**, or **Portable library** with a writable shared folder.
+4. **Open a local collection or select Add YouTube.** Return to Continue learning
+   when you come back. Subfolders become local collections; videos directly in the
+   chosen folder work too.
 
 Ubuntu opens the player in your browser through a local launcher. There is no
 publicly hosted player to upload your library to, and no server account to create.
@@ -152,6 +179,11 @@ history needs manual backup transfer. Regrant folder access on the receiving dev
 **Does PaceShelf include courses or download videos?** No. Supply videos you are
 entitled to use. YouTube links use its official player and require internet; other
 streaming services are not implemented.
+
+**Can I import my YouTube account library or Watch Later?** No. Paste a public or
+unlisted playlist link, or individual video links. Private playlists and account-only
+pages are unsupported. Playlist updates require **Review playlist updates**;
+they do not run in the background. Some videos also prohibit embedded playback.
 
 **Do I need sudo on Ubuntu?** Package installation may require administrator access.
 Run PaceShelf as your normal user; do not run `start.sh` with sudo.

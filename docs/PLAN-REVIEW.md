@@ -1,5 +1,10 @@
 # Product plan review
 
+This is the original planning review, not a report of current defects. The 0.2.1
+preview now includes local libraries, versioned progress and an isolated YouTube
+integration. See [current implementation status](IMPLEMENTATION.md) and
+[verification evidence](../VERIFICATION.md) for completed work and remaining gates.
+
 Reviewed against PRODUCT-PLAN.md, the 1.2.2 source, and the
 official platform/provider documentation linked below.
 
@@ -12,7 +17,7 @@ before building the new collection interface.
 This is a design/code review, not a penetration test, physical-device battery
 measurement or implementation of the proposed mitigations. Severity describes
 what must be resolved before the affected feature is released. A risk in a new
-feature does not mean it is already exploitable in the current local-only app.
+feature does not mean it was already exploitable in the original local-only app.
 
 ## Findings requiring a decision before implementation
 

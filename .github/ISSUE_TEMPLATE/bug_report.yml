@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: PaceShelf version
-      placeholder: "For example: 0.1.0 preview"
+      placeholder: "For example: 0.2.1 preview"
     validations:
       required: true
   - type: input
@@ -18,6 +18,18 @@ body:
     attributes:
       label: Operating system and browser or WebView
       placeholder: "For example: Ubuntu version and browser version, or Android version"
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Source or feature
+      options:
+        - Local videos
+        - YouTube video links
+        - YouTube playlist import or updates
+        - Library, progress or installation
+        - Not sure
     validations:
       required: true
   - type: dropdown

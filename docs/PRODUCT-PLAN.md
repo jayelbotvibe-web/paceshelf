@@ -1,10 +1,12 @@
 # PaceShelf product plan
 
-Planning baseline: PaceShelf 1.2.2. Proposed capabilities require separate validation.
+Planning baseline: the original 1.2.2 player. Proposed capabilities require separate validation.
 
-This document records the proposed product scope and implementation order. Features
-listed as additions are planned, not implemented. The existing Android and Ubuntu
-player remains the starting point.
+This document records the product scope and implementation order. The current
+**0.2.1 preview** implements local libraries and the initial YouTube integration;
+many roadmap items remain planned. Use [implementation status](IMPLEMENTATION.md)
+and [verification evidence](../VERIFICATION.md) to distinguish shipped behavior
+from proposals. The original Android and Ubuntu player was the starting point.
 
 The detailed [risk review](PLAN-REVIEW.md) identifies migration, synchronization,
 online-content isolation, durability and distribution issues. The delivery order
@@ -196,9 +198,10 @@ call privileged local save, file-selection or removal operations.
 
 ## Online source support
 
-YouTube videos/playlists are part of the intended first online release, following
-a feasibility check on the actual desktop and Android environments. A local public
-release can ship independently; an online integration failure must not block it.
+Public/unlisted YouTube videos and playlists are available in the 0.2.x preview
+after an isolated desktop/Android-emulator feasibility check. Physical-device
+validation remains outstanding. The requirements below describe that integration
+and its remaining release gates; other streaming sources remain planned.
 
 Before committing the implementation, verify supported playback integration,
 playlist enumeration, saved-position seeking, speed, event reporting, captions,
@@ -207,11 +210,11 @@ This check must also establish whether the integration can be distributed withou
 a maintainer-operated proxy or backend. A blocker should be made explicit before
 promising the feature as complete.
 
-The current Android request filter and Content Security Policy intentionally block
-external content, and the current Ubuntu response suppresses Referer. Prototype
-provider playback in an isolated context without the privileged Android bridge;
-verify the provider's required client identity rather than globally weakening
-local safeguards. See R03–R05 in the risk review and the
+The original local-player filters intentionally blocked external content and
+suppressed Referer. The preview now keeps provider playback in an isolated context
+without the privileged Android bridge and supplies the provider's client identity
+separately. Preserve those local safeguards as the integration evolves. See R03–R05
+in the historical risk review and the
 [official embedded-player requirements](https://developers.google.com/youtube/terms/required-minimum-functionality?hl=en).
 
 Define capabilities per source: available speeds, seek/resume, automatic advance,
